@@ -100,7 +100,7 @@ foreach ($navItems as $item) {
         <li class="nav-item sidebar-group-item">
           <a class="sidebar-group-toggle d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none"
              href="#<?= $gid ?>" data-bs-toggle="collapse" aria-expanded="<?= $isOpen ?>">
-            <span class="text-uppercase text-muted" style="font-size:10px;font-weight:600;letter-spacing:.08em">
+            <span class="sidebar-group-label-text text-uppercase">
               <?= e($item['group']) ?>
             </span>
             <i class="bi bi-chevron-down sidebar-chevron text-muted" style="font-size:10px;transition:transform .2s"></i>
@@ -135,4 +135,10 @@ foreach ($navItems as $item) {
 .sidebar-group-toggle:hover { background: #f8f9fa; }
 .sidebar-group-toggle[aria-expanded="true"] .sidebar-chevron { transform: rotate(180deg); }
 .sidebar-group-item > .collapse > .nav-item > .sidebar-link { padding-left: 1.5rem; }
+.sidebar-group-label-text {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  color: #444 !important;
+}
 </style>
