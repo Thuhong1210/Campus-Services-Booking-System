@@ -58,6 +58,21 @@ $unreadNotifications = 0;
 if ($user) {
     $unreadNotifications = (new NotificationRepository())->countUnread((int) $user['id']);
 }
+
+// Xác định group nào đang chứa trang active để mở sẵn
+$currentPage = $_GET['page'] ?? 'dashboard';
+$currentAction = $_GET['action'] ?? 'index';
+$activeGroup = null;
+$currentGroup = null;
+foreach ($navItems as $item) {
+    if (isset($item['group'])) {
+        $currentGroup = $item['group'];
+    } elseif (isset($item['page'])) {
+        if ($item['page'] === $currentPage) {
+            $activeGroup = $currentGroup;
+        }
+    }
+}
 ?>
 <nav id="sidebar" class="sidebar bg-white border-end d-flex flex-column">
   <div class="sidebar-header p-3 border-bottom">
@@ -69,16 +84,32 @@ if ($user) {
       </div>
     </div>
   </div>
-  <ul class="nav flex-column p-2 flex-grow-1 sidebar-nav">
-    <?php foreach ($navItems as $item): ?>
-      <?php if (isset($item['group'])): ?>
-        <li class="nav-item mt-2">
-          <span class="sidebar-group-label px-2 text-uppercase text-muted" style="font-size:10px;font-weight:600;letter-spacing:.08em">
-            <?= e($item['group']) ?>
-          </span>
-        </li>
-      <?php else: ?>
-        <?php $active = is_active_nav($item['page'], $item['action']); ?>
+  <ul class="nav flex-column p-2 flex-grow-1 sidebar-nav" id="sidebarNav">
+    <?php
+    $groupId = 0;
+    $inGroup = false;
+    foreach ($navItems as $item):
+        if (isset($item['group'])):
+            if ($inGroup) echo '</ul></li>';
+            $groupId++;
+            $gid = 'sidebarGroup' . $groupId;
+            $isOpen = ($item['group'] === $activeGroup) ? 'true' : 'false';
+            $collapseClass = ($item['group'] === $activeGroup) ? 'show' : '';
+            $inGroup = true;
+    ?>
+        <li class="nav-item sidebar-group-item">
+          <a class="sidebar-group-toggle d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none"
+             href="#<?= $gid ?>" data-bs-toggle="collapse" aria-expanded="<?= $isOpen ?>">
+            <span class="text-uppercase text-muted" style="font-size:10px;font-weight:600;letter-spacing:.08em">
+              <?= e($item['group']) ?>
+            </span>
+            <i class="bi bi-chevron-down sidebar-chevron text-muted" style="font-size:10px;transition:transform .2s"></i>
+          </a>
+          <ul class="nav flex-column collapse <?= $collapseClass ?>" id="<?= $gid ?>">
+    <?php
+        else:
+            $active = is_active_nav($item['page'], $item['action']);
+    ?>
         <li class="nav-item">
           <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
             <i class="bi <?= e($item['icon']) ?> me-2"></i><?= e($item['label']) ?>
@@ -87,8 +118,11 @@ if ($user) {
             <?php endif; ?>
           </a>
         </li>
-      <?php endif; ?>
-    <?php endforeach; ?>
+    <?php
+        endif;
+    endforeach;
+    if ($inGroup) echo '</ul></li>';
+    ?>
   </ul>
   <div class="p-2 border-top">
     <a class="nav-link sidebar-link text-danger" href="<?= url('logout.php') ?>">
@@ -96,3 +130,9 @@ if ($user) {
     </a>
   </div>
 </nav>
+<style>
+.sidebar-group-toggle { border-radius: 6px; cursor: pointer; }
+.sidebar-group-toggle:hover { background: #f8f9fa; }
+.sidebar-group-toggle[aria-expanded="true"] .sidebar-chevron { transform: rotate(180deg); }
+.sidebar-group-item > .collapse > .nav-item > .sidebar-link { padding-left: 1.5rem; }
+</style>
