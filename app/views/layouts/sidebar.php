@@ -1,0 +1,80 @@
+<?php
+$role = Auth::primaryRole();
+$navItems = match ($role) {
+    'Admin' => [
+        ['page' => 'dashboard', 'action' => 'index', 'label' => 'Dashboard', 'icon' => 'bi-speedometer2'],
+        ['page' => 'users', 'action' => 'index', 'label' => 'User Management', 'icon' => 'bi-people'],
+        ['page' => 'resource-categories', 'action' => 'index', 'label' => 'Resource Categories', 'icon' => 'bi-tags'],
+        ['page' => 'resources', 'action' => 'index', 'label' => 'Resources', 'icon' => 'bi-box'],
+        ['page' => 'equipment', 'action' => 'index', 'label' => 'Equipment', 'icon' => 'bi-tools'],
+        ['page' => 'time-slots', 'action' => 'index', 'label' => 'Time Slots', 'icon' => 'bi-clock'],
+        ['page' => 'booking-policies', 'action' => 'index', 'label' => 'Booking Policies', 'icon' => 'bi-shield-check'],
+        ['page' => 'maintenance', 'action' => 'index', 'label' => 'Maintenance', 'icon' => 'bi-wrench'],
+        ['page' => 'bookings', 'action' => 'index', 'label' => 'Booking Management', 'icon' => 'bi-calendar-check'],
+        ['page' => 'approvals', 'action' => 'index', 'label' => 'Approval Requests', 'icon' => 'bi-check2-square'],
+        ['page' => 'cancellations', 'action' => 'index', 'label' => 'Cancellations', 'icon' => 'bi-x-circle'],
+        ['page' => 'reports', 'action' => 'index', 'label' => 'Usage Reports', 'icon' => 'bi-bar-chart'],
+        ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
+        ['page' => 'audit-logs', 'action' => 'index', 'label' => 'Audit Logs', 'icon' => 'bi-journal-text'],
+        ['page' => 'settings', 'action' => 'index', 'label' => 'Settings', 'icon' => 'bi-gear'],
+    ],
+    'Lecturer', 'Approver' => [
+        ['page' => 'dashboard', 'action' => 'index', 'label' => 'Dashboard', 'icon' => 'bi-speedometer2'],
+        ['page' => 'approvals', 'action' => 'index', 'label' => 'Pending Approvals', 'icon' => 'bi-check2-square'],
+        ['page' => 'approvals', 'action' => 'history', 'label' => 'Approval History', 'icon' => 'bi-clock-history'],
+        ['page' => 'bookings', 'action' => 'calendar', 'label' => 'Resource Calendar', 'icon' => 'bi-calendar3'],
+        ['page' => 'bookings', 'action' => 'create', 'label' => 'Create Booking', 'icon' => 'bi-plus-circle'],
+        ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
+        ['page' => 'profile', 'action' => 'index', 'label' => 'Profile', 'icon' => 'bi-person'],
+    ],
+    'Staff' => [
+        ['page' => 'dashboard', 'action' => 'index', 'label' => 'Staff Dashboard', 'icon' => 'bi-speedometer2'],
+        ['page' => 'resources', 'action' => 'browse', 'label' => 'Browse Resources', 'icon' => 'bi-search'],
+        ['page' => 'bookings', 'action' => 'calendar', 'label' => 'Resource Calendar', 'icon' => 'bi-calendar3'],
+        ['page' => 'bookings', 'action' => 'index', 'label' => 'All Bookings', 'icon' => 'bi-list-check'],
+        ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
+        ['page' => 'profile', 'action' => 'index', 'label' => 'Profile', 'icon' => 'bi-person'],
+    ],
+    default => [
+        ['page' => 'dashboard', 'action' => 'index', 'label' => 'Student Dashboard', 'icon' => 'bi-speedometer2'],
+        ['page' => 'resources', 'action' => 'browse', 'label' => 'Browse Resources', 'icon' => 'bi-search'],
+        ['page' => 'bookings', 'action' => 'calendar', 'label' => 'Resource Calendar', 'icon' => 'bi-calendar3'],
+        ['page' => 'bookings', 'action' => 'create', 'label' => 'Create Booking', 'icon' => 'bi-plus-circle'],
+        ['page' => 'bookings', 'action' => 'my', 'label' => 'My Bookings', 'icon' => 'bi-list-check'],
+        ['page' => 'bookings', 'action' => 'schedule', 'label' => 'My Schedule', 'icon' => 'bi-calendar-week'],
+        ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
+        ['page' => 'profile', 'action' => 'index', 'label' => 'Profile', 'icon' => 'bi-person'],
+    ],
+};
+$user = Auth::user();
+$unreadNotifications = 0;
+if ($user) {
+    $unreadNotifications = (new NotificationRepository())->countUnread((int) $user['id']);
+}
+?>
+<nav id="sidebar" class="sidebar bg-white border-end d-flex flex-column">
+  <div class="sidebar-header p-3 border-bottom">
+    <div class="d-flex align-items-center gap-2">
+      <div class="brand-icon"><i class="bi bi-mortarboard-fill text-white"></i></div>
+      <div>
+        <div class="fw-bold text-primary brand-text lh-1">Campus Services</div>
+        <div class="text-muted" style="font-size:10px">IS-VNU Booking</div>
+      </div>
+    </div>
+  </div>
+  <ul class="nav flex-column p-2 flex-grow-1 sidebar-nav">
+    <?php foreach ($navItems as $item): ?>
+      <?php $active = is_active_nav($item['page'], $item['action']); ?>
+      <li class="nav-item">
+        <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
+          <i class="bi <?= e($item['icon']) ?> me-2"></i><?= e($item['label']) ?>
+        </a>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+  <div class="p-2 border-top">
+    <a class="nav-link sidebar-link text-danger" href="<?= url('logout.php') ?>">
+      <i class="bi bi-box-arrow-right me-2"></i>Logout
+    </a>
+  </div>
+</nav>

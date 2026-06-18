@@ -1,0 +1,5 @@
+<div class="mb-4"><h1 class="h3 fw-bold">Booking <?= e($booking['booking_reference']) ?></h1><?= status_badge($booking['status']) ?></div>
+<div class="card p-4"><div class="row"><div class="col-md-6"><p><strong>Resource:</strong> <?= e($booking['resource_name']) ?></p><p><strong>Category:</strong> <?= e($booking['category_name']??'') ?></p><p><strong>Start:</strong> <?= format_datetime($booking['start_datetime']) ?></p><p><strong>End:</strong> <?= format_datetime($booking['end_datetime']) ?></p></div>
+<div class="col-md-6"><p><strong>Purpose:</strong> <?= e($booking['purpose']) ?></p><p><strong>Notes:</strong> <?= e($booking['additional_notes']??'-') ?></p><p><strong>Booked by:</strong> <?= e($booking['user_name']??'') ?></p></div></div>
+<?php if(!empty($approvals)): ?><h6 class="mt-3">Approval History</h6><ul><?php foreach($approvals as $a): ?><li><?= e($a['decision']) ?> by <?= e($a['approver_name']) ?> - <?= e($a['comment']??'') ?></li><?php endforeach; ?></ul><?php endif; ?>
+</div>

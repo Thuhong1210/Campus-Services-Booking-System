@@ -1,0 +1,6 @@
+<div class="d-flex justify-content-between mb-4"><h1 class="h3 fw-bold">Resource Categories</h1><a href="<?= url('index.php?page=resource-categories&action=create') ?>" class="btn btn-primary">Add Category</a></div>
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>ID</th><th>Name</th><th>Requires Approval</th><th>Max Duration</th><th>Peak Limit</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<?php foreach($categories as $c): ?><tr><td><?= $c['id'] ?></td><td><?= e($c['category_name']) ?></td><td><?= $c['requires_approval']?'Yes':'No' ?></td><td><?= e($c['max_booking_hours_per_day']) ?>h/day</td><td><?= $c['max_peak_slots_per_week'] ?></td><td><?= status_badge($c['status'],'resource') ?></td>
+<td><a href="<?= url('index.php?page=resource-categories&action=edit&id='.$c['id']) ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+<form method="POST" action="<?= url('index.php?page=resource-categories&action=delete&id='.$c['id']) ?>" class="d-inline" onsubmit="return confirm('Delete?')"><?= csrf_field() ?><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr><?php endforeach; ?>
+</tbody></table></div></div>

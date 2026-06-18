@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Prevent direct access to app folder
+RewriteRule ^app/ - [F,L]
+
+# Route all requests to index if file doesn't exist
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]

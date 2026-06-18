@@ -1,0 +1,5 @@
+<div class="mb-4"><h1 class="h3 fw-bold">Booking Management</h1></div>
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Reference</th><th>Student</th><th>Resource</th><th>Date/Time</th><th>Purpose</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<?php foreach($bookings as $b): ?><tr><td><?= e($b['booking_reference']) ?></td><td><?= e($b['user_name']??'') ?></td><td><?= e($b['resource_name']??'') ?></td><td><?= format_datetime($b['start_datetime']) ?></td><td><?= e($b['purpose']) ?></td><td><?= status_badge($b['status']) ?></td>
+<td><a href="<?= url('index.php?page=bookings&action=show&id='.$b['id']) ?>" class="btn btn-sm btn-outline-primary">View</a></td></tr><?php endforeach; ?>
+</tbody></table></div></div><?php require VIEW_PATH.'/partials/pagination.php'; ?>

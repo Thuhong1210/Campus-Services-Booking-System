@@ -1,0 +1,5 @@
+<div class="d-flex justify-content-between mb-4"><h1 class="h3 fw-bold">Time Slots</h1><a href="<?= url('index.php?page=time-slots&action=create') ?>" class="btn btn-primary">Add Time Slot</a></div>
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>ID</th><th>Resource</th><th>Day</th><th>Start</th><th>End</th><th>Peak</th><th>Active</th><th>Actions</th></tr></thead><tbody>
+<?php foreach($timeSlots as $ts): ?><tr><td><?= $ts['id'] ?></td><td><?= e($ts['resource_name']) ?></td><td><?= day_name((int)$ts['day_of_week']) ?></td><td><?= date('H:i',strtotime($ts['start_time'])) ?></td><td><?= date('H:i',strtotime($ts['end_time'])) ?></td><td><?= $ts['is_peak']?'Yes':'No' ?></td><td><?= $ts['is_active']?'Active':'Disabled' ?></td>
+<td><a href="<?= url('index.php?page=time-slots&action=edit&id='.$ts['id']) ?>" class="btn btn-sm btn-outline-primary">Edit</a></td></tr><?php endforeach; ?>
+</tbody></table></div></div>

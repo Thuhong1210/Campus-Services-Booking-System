@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+
+# XAMPP / PHP
+/config/database.php
+*.log
+
+# Environment
+.env
+.env.*
+
+# Vendor
+vendor/
+node_modules/
+
+# Uploads (user data, không nên push)
+public/uploads/
+
+# Cache
+*.cache

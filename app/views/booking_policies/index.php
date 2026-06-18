@@ -1,0 +1,5 @@
+<div class="d-flex justify-content-between mb-4"><h1 class="h3 fw-bold">Booking Policies</h1><a href="<?= url('index.php?page=booking-policies&action=create') ?>" class="btn btn-primary">Add Policy</a></div>
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Policy</th><th>Category</th><th>Max Duration</th><th>Weekly Quota</th><th>Peak Limit</th><th>Approval</th><th>Actions</th></tr></thead><tbody>
+<?php foreach($policies as $p): ?><tr><td><?= e($p['policy_name']) ?></td><td><?= e($p['category_name']) ?></td><td><?= $p['max_duration_hours'] ?>h</td><td><?= $p['weekly_quota'] ?></td><td><?= $p['max_peak_slots_per_week'] ?></td><td><?= $p['requires_approval']?'Yes':'No' ?></td>
+<td><a href="<?= url('index.php?page=booking-policies&action=edit&id='.$p['id']) ?>" class="btn btn-sm btn-outline-primary">Edit</a></td></tr><?php endforeach; ?>
+</tbody></table></div></div>
