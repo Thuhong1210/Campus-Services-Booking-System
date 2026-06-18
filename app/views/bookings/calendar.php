@@ -1,6 +1,8 @@
 <div class="mb-4"><h1 class="h3 fw-bold">Resource Calendar</h1></div>
+
 <form class="row g-2 mb-4" method="GET">
-  <input type="hidden" name="page" value="bookings/calendar">
+  <input type="hidden" name="page" value="bookings">
+  <input type="hidden" name="action" value="calendar">
   <div class="col-md-4">
     <select name="resource_id" class="form-select">
       <option value="">All Resources</option>
@@ -21,24 +23,35 @@
   <div id="calendar"></div>
 </div>
 
+<?php
+$currentUserId = Auth::id();
+$isAdmin = Auth::isAdmin();
+?>
 <script>
-const events = <?= json_encode(array_map(function($b) {
+const currentUserId = <?= (int)$currentUserId ?>;
+const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
+
+const events = <?= json_encode(array_map(function($b) use ($currentUserId, $isAdmin) {
+    $isOwner = (int)$b['user_id'] === (int)$currentUserId;
+    $canClick = $isOwner || $isAdmin;
     return [
-        'title'  => $b['resource_name'] . ' — ' . ($b['user_name'] ?? ''),
-        'start'  => $b['start_datetime'],
-        'end'    => $b['end_datetime'],
-        'color'  => match($b['status']) {
-            'approved'  => '#0d6efd',
+        'id'    => $b['id'],
+        'title' => $b['resource_name'] . ' — ' . ($b['user_name'] ?? ''),
+        'start' => $b['start_datetime'],
+        'end'   => $b['end_datetime'],
+        'color' => match($b['status']) {
+            'approved'  => $isOwner || $isAdmin ? '#0d6efd' : '#6c9bd2',
             'pending'   => '#ffc107',
             'cancelled' => '#dc3545',
             'completed' => '#6c757d',
             default     => '#0d6efd'
         },
-        'url' => 'index.php?page=bookings&action=show&id=' . $b['id'],
+        'url'           => $canClick ? 'index.php?page=bookings&action=show&id=' . $b['id'] : null,
+        'extendedProps' => ['canClick' => $canClick],
     ];
 }, $events)) ?>;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'timeGridWeek',
         headerToolbar: {
@@ -48,11 +61,20 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         events: events,
         height: 650,
-        locale: 'en',
-        eventClick: function(info) {
+        eventClick: function (info) {
+            if (!info.event.extendedProps.canClick) {
+                info.jsEvent.preventDefault();
+                return;
+            }
             if (info.event.url) {
                 info.jsEvent.preventDefault();
                 window.location.href = info.event.url;
+            }
+        },
+        eventDidMount: function (info) {
+            if (!info.event.extendedProps.canClick) {
+                info.el.style.cursor = 'default';
+                info.el.title = 'Booked by another user';
             }
         }
     });
