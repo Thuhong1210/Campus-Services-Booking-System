@@ -146,16 +146,21 @@ class ReportRepository
 
         $peakVsOffPeak = $this->db->query(
             'SELECT
-                SUM(CASE WHEN ts.is_peak = 1 THEN 1 ELSE 0 END) AS peak,
-                SUM(CASE WHEN ts.is_peak = 0 OR ts.is_peak IS NULL THEN 1 ELSE 0 END) AS off_peak
-             FROM bookings b
-             LEFT JOIN time_slots ts ON ts.resource_id = b.resource_id
-                AND ts.day_of_week = DAYOFWEEK(b.start_datetime) - 1
-                AND ts.is_active = 1
-                AND ts.start_time < TIME(b.end_datetime)
-                AND ts.end_time > TIME(b.start_datetime)
-             WHERE b.status IN ("approved", "completed")
-             AND b.start_datetime >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)'
+    SUM(CASE WHEN peak_flag = 1 THEN 1 ELSE 0 END) AS peak,
+    SUM(CASE WHEN peak_flag = 0 THEN 1 ELSE 0 END) AS off_peak
+ FROM (
+     SELECT b.id,
+         MAX(CASE WHEN ts.is_peak = 1 THEN 1 ELSE 0 END) AS peak_flag
+     FROM bookings b
+     LEFT JOIN time_slots ts ON ts.resource_id = b.resource_id
+         AND ts.day_of_week = DAYOFWEEK(b.start_datetime) - 1
+         AND ts.is_active = 1
+         AND ts.start_time < TIME(b.end_datetime)
+         AND ts.end_time > TIME(b.start_datetime)
+     WHERE b.status IN ("approved", "completed")
+     AND b.start_datetime >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+     GROUP BY b.id
+ ) AS sub'
         )->fetch();
 
         return [
