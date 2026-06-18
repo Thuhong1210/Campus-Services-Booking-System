@@ -2,17 +2,24 @@
 $role = Auth::primaryRole();
 $navItems = match ($role) {
     'Admin' => [
+        ['group' => 'Overview'],
         ['page' => 'dashboard', 'action' => 'index', 'label' => 'Dashboard', 'icon' => 'bi-speedometer2'],
         ['page' => 'users', 'action' => 'index', 'label' => 'User Management', 'icon' => 'bi-people'],
+
+        ['group' => 'Resources'],
         ['page' => 'resource-categories', 'action' => 'index', 'label' => 'Resource Categories', 'icon' => 'bi-tags'],
         ['page' => 'resources', 'action' => 'index', 'label' => 'Resources', 'icon' => 'bi-box'],
         ['page' => 'equipment', 'action' => 'index', 'label' => 'Equipment', 'icon' => 'bi-tools'],
         ['page' => 'time-slots', 'action' => 'index', 'label' => 'Time Slots', 'icon' => 'bi-clock'],
         ['page' => 'booking-policies', 'action' => 'index', 'label' => 'Booking Policies', 'icon' => 'bi-shield-check'],
         ['page' => 'maintenance', 'action' => 'index', 'label' => 'Maintenance', 'icon' => 'bi-wrench'],
+
+        ['group' => 'Bookings'],
         ['page' => 'bookings', 'action' => 'index', 'label' => 'Booking Management', 'icon' => 'bi-calendar-check'],
         ['page' => 'approvals', 'action' => 'index', 'label' => 'Approval Requests', 'icon' => 'bi-check2-square'],
         ['page' => 'cancellations', 'action' => 'index', 'label' => 'Cancellations', 'icon' => 'bi-x-circle'],
+
+        ['group' => 'Reports & System'],
         ['page' => 'reports', 'action' => 'index', 'label' => 'Usage Reports', 'icon' => 'bi-bar-chart'],
         ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
         ['page' => 'audit-logs', 'action' => 'index', 'label' => 'Audit Logs', 'icon' => 'bi-journal-text'],
@@ -64,12 +71,23 @@ if ($user) {
   </div>
   <ul class="nav flex-column p-2 flex-grow-1 sidebar-nav">
     <?php foreach ($navItems as $item): ?>
-      <?php $active = is_active_nav($item['page'], $item['action']); ?>
-      <li class="nav-item">
-        <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
-          <i class="bi <?= e($item['icon']) ?> me-2"></i><?= e($item['label']) ?>
-        </a>
-      </li>
+      <?php if (isset($item['group'])): ?>
+        <li class="nav-item mt-2">
+          <span class="sidebar-group-label px-2 text-uppercase text-muted" style="font-size:10px;font-weight:600;letter-spacing:.08em">
+            <?= e($item['group']) ?>
+          </span>
+        </li>
+      <?php else: ?>
+        <?php $active = is_active_nav($item['page'], $item['action']); ?>
+        <li class="nav-item">
+          <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
+            <i class="bi <?= e($item['icon']) ?> me-2"></i><?= e($item['label']) ?>
+            <?php if ($item['page'] === 'notifications' && $unreadNotifications > 0): ?>
+              <span class="badge bg-danger ms-auto"><?= $unreadNotifications ?></span>
+            <?php endif; ?>
+          </a>
+        </li>
+      <?php endif; ?>
     <?php endforeach; ?>
   </ul>
   <div class="p-2 border-top">
