@@ -1,6 +1,6 @@
 <?php
 $avatarUrl = !empty($user['avatar'])
-    ? url('public/assets/avatars/' . e($user['avatar']))
+    ? asset('avatars/' . $user['avatar'])
     : null;
 $initials = strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explode(' ', $user['full_name']), 0, 2))));
 $roles = implode(', ', array_column($user['roles'] ?? [], 'role_name'));
@@ -62,6 +62,7 @@ $roles = implode(', ', array_column($user['roles'] ?? [], 'role_name'));
           <div class="col-md-6">
             <label class="form-label fw-semibold">Email</label>
             <input type="email" class="form-control bg-light" value="<?= e($user['email']) ?>" readonly>
+            <input type="hidden" name="email" value="<?= e($user['email']) ?>">
             <small class="text-muted">Email cannot be changed</small>
           </div>
           <div class="col-md-6">
