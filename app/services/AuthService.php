@@ -61,8 +61,8 @@ class AuthService
             return ['success' => false, 'message' => 'Current password is incorrect.'];
         }
 
-        if (strlen($newPassword) < 6) {
-            return ['success' => false, 'message' => 'New password must be at least 6 characters.'];
+        if (strlen($newPassword) < 8) {
+            return ['success' => false, 'message' => 'New password must be at least 8 characters.'];
         }
 
         $roles = $this->userRepo->getRoles($userId);

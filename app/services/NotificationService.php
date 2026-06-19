@@ -87,7 +87,8 @@ class NotificationService
     {
         $approvers = $this->userRepo->all(['role' => 'Approver'], 100, 0);
         $lecturers = $this->userRepo->all(['role' => 'Lecturer'], 100, 0);
-        $recipients = array_merge($approvers, $lecturers);
+        $admins = $this->userRepo->all(['role' => 'Admin'], 100, 0);
+        $recipients = array_merge($approvers, $lecturers, $admins);
 
         $seen = [];
         foreach ($recipients as $recipient) {

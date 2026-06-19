@@ -259,4 +259,47 @@ class BookingService
             'booking' => $updated,
         ];
     }
+
+    public function checkAvailability(
+        int $resourceId,
+        string $startDatetime,
+        string $endDatetime,
+        int $userId,
+        ?int $excludeBookingId = null
+    ): array {
+        $resource = $this->resourceRepo->findById($resourceId);
+        if (!$resource) {
+            return ['success' => false, 'available' => false, 'message' => 'Resource not found.'];
+        }
+
+        if ($resource['status'] !== 'available') {
+            return ['success' => false, 'available' => false, 'message' => 'This resource is not available for booking.'];
+        }
+
+        $data = [
+            'user_id' => $userId,
+            'resource_id' => $resourceId,
+            'start_datetime' => $startDatetime,
+            'end_datetime' => $endDatetime,
+            'purpose' => 'Availability check',
+            'exclude_booking_id' => $excludeBookingId,
+        ];
+        $userRoles = $this->userRepo->getRoles($userId);
+        $policyErrors = $this->policyService->validate($data, $resource, $userRoles);
+        if (!empty($policyErrors)) {
+            return ['success' => false, 'available' => false, 'message' => $policyErrors[0]];
+        }
+
+        $conflicts = $this->bookingRepo->findConflicts($resourceId, $startDatetime, $endDatetime, $excludeBookingId);
+        if (!empty($conflicts)) {
+            return ['success' => false, 'available' => false, 'message' => 'This resource is already booked during the selected time period.'];
+        }
+
+        $maintenance = $this->maintenanceRepo->findActiveForResource($resourceId, $startDatetime, $endDatetime);
+        if (!empty($maintenance)) {
+            return ['success' => false, 'available' => false, 'message' => 'This resource is currently under maintenance and cannot be booked.'];
+        }
+
+        return ['success' => true, 'available' => true, 'message' => 'Time slot is available.'];
+    }
 }
