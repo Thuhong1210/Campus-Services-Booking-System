@@ -1,11 +1,20 @@
-<header class="topbar bg-white border-bottom px-3 px-lg-4 py-2 d-flex align-items-center justify-content-between">
-  <div class="d-flex align-items-center gap-2 flex-grow-1">
-    <button class="btn btn-link d-lg-none p-0 text-dark" id="sidebarToggle" aria-label="Toggle menu">
-      <i class="bi bi-list fs-4"></i>
-    </button>
+<?php
+$user = Auth::user();
+$role = Auth::primaryRole();
+$unreadNotifications = 0;
+if ($user) {
+    $unreadNotifications = (new NotificationRepository())->countUnread((int) $user['id']);
+}
+?>
+<header class="topbar">
+  <button class="btn btn-sm btn-light d-lg-none border-0 p-1 me-2" id="sidebarToggle" aria-label="Toggle menu">
+    <i class="bi bi-list fs-5"></i>
+  </button>
+
+  <div class="flex-grow-1">
     <?php if (!empty($breadcrumbs)): ?>
       <nav aria-label="breadcrumb" class="d-none d-md-block">
-        <ol class="breadcrumb mb-0 small">
+        <ol class="breadcrumb mb-0">
           <?php foreach ($breadcrumbs as $i => $crumb): ?>
             <li class="breadcrumb-item <?= $i === count($breadcrumbs) - 1 ? 'active' : '' ?>">
               <?php if (!empty($crumb['url']) && $i < count($breadcrumbs) - 1): ?>
@@ -18,20 +27,28 @@
         </ol>
       </nav>
     <?php else: ?>
-      <h2 class="h6 mb-0 fw-semibold text-truncate d-none d-md-block"><?= e($title ?? '') ?></h2>
+      <span class="topbar-title d-none d-md-inline"><?= e($title ?? '') ?></span>
     <?php endif; ?>
   </div>
+
   <div class="d-flex align-items-center gap-3">
-    <a href="<?= route_url('notifications') ?>" class="position-relative text-muted text-decoration-none" title="Notifications">
-      <i class="bi bi-bell fs-5"></i>
+    <a href="<?= route_url('notifications') ?>" class="position-relative text-decoration-none"
+       style="color:var(--text-muted)" title="Notifications">
+      <i class="bi bi-bell" style="font-size:18px"></i>
       <?php if ($unreadNotifications > 0): ?>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge"><?= $unreadNotifications ?></span>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
+          <?= $unreadNotifications ?>
+        </span>
       <?php endif; ?>
     </a>
-    <div class="text-end d-none d-sm-block">
-      <div class="fw-medium small lh-1"><?= e($user['full_name'] ?? '') ?></div>
-      <div class="text-muted" style="font-size:11px"><?= e($role) ?></div>
+
+    <div class="d-none d-sm-flex flex-column text-end" style="line-height:1.2">
+      <span class="fw-semibold" style="font-size:13px"><?= e($user['full_name'] ?? '') ?></span>
+      <span style="font-size:11px;color:var(--text-muted)"><?= e($role) ?></span>
     </div>
-    <div class="avatar-circle" title="<?= e($user['full_name'] ?? '') ?>"><?= strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) ?></div>
+
+    <a href="<?= route_url('profile') ?>" class="avatar-circle text-decoration-none" title="Profile">
+      <?= strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) ?>
+    </a>
   </div>
 </header>

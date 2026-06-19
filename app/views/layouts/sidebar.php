@@ -74,17 +74,17 @@ foreach ($navItems as $item) {
     }
 }
 ?>
-<nav id="sidebar" class="sidebar bg-white border-end d-flex flex-column">
-  <div class="sidebar-header p-3 border-bottom">
+<nav id="sidebar" class="sidebar">
+  <div class="sidebar-header">
     <div class="d-flex align-items-center gap-2">
-      <div class="brand-icon"><i class="bi bi-mortarboard-fill text-white"></i></div>
+      <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
       <div>
-        <div class="fw-bold text-primary brand-text lh-1">Campus Services</div>
-        <div class="text-muted" style="font-size:10px">IS-VNU Booking</div>
+        <div class="brand-text lh-1">Campus Services</div>
+        <div style="font-size:10px;color:var(--text-muted)">IS-VNU Booking</div>
       </div>
     </div>
   </div>
-  <ul class="nav flex-column p-2 flex-grow-1 sidebar-nav" id="sidebarNav">
+  <ul class="nav flex-column sidebar-nav" id="sidebarNav">
     <?php
     $groupId = 0;
     $inGroup = false;
@@ -93,17 +93,15 @@ foreach ($navItems as $item) {
             if ($inGroup) echo '</ul></li>';
             $groupId++;
             $gid = 'sidebarGroup' . $groupId;
-            $isOpen = ($item['group'] === $activeGroup) ? 'true' : 'false';
-            $collapseClass = ($item['group'] === $activeGroup) ? 'show' : '';
+            $isOpen = 'true';
+            $collapseClass = 'show';
             $inGroup = true;
     ?>
         <li class="nav-item sidebar-group-item">
-          <a class="sidebar-group-toggle d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none"
+          <a class="sidebar-group-toggle text-decoration-none"
              href="#<?= $gid ?>" data-bs-toggle="collapse" aria-expanded="<?= $isOpen ?>">
-            <span class="sidebar-group-label-text text-uppercase">
-              <?= e($item['group']) ?>
-            </span>
-            <i class="bi bi-chevron-down sidebar-chevron text-muted" style="font-size:10px;transition:transform .2s"></i>
+            <span class="sidebar-group-label-text"><?= e($item['group']) ?></span>
+            <i class="bi bi-chevron-down sidebar-chevron"></i>
           </a>
           <ul class="nav flex-column collapse <?= $collapseClass ?>" id="<?= $gid ?>">
     <?php
@@ -112,7 +110,7 @@ foreach ($navItems as $item) {
     ?>
         <li class="nav-item">
           <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
-            <i class="bi <?= e($item['icon']) ?> me-2"></i><?= e($item['label']) ?>
+            <i class="bi <?= e($item['icon']) ?>"></i><?= e($item['label']) ?>
             <?php if ($item['page'] === 'notifications' && $unreadNotifications > 0): ?>
               <span class="badge bg-danger ms-auto"><?= $unreadNotifications ?></span>
             <?php endif; ?>
@@ -124,21 +122,11 @@ foreach ($navItems as $item) {
     if ($inGroup) echo '</ul></li>';
     ?>
   </ul>
-  <div class="p-2 border-top">
-    <a class="nav-link sidebar-link text-danger" href="<?= url('logout.php') ?>">
-      <i class="bi bi-box-arrow-right me-2"></i>Logout
+  <div class="sidebar-footer">
+    <a class="nav-link sidebar-link" href="<?= url('logout.php') ?>">
+      <i class="bi bi-box-arrow-right"></i>Logout
     </a>
   </div>
 </nav>
-<style>
-.sidebar-group-toggle { border-radius: 6px; cursor: pointer; }
-.sidebar-group-toggle:hover { background: #f8f9fa; }
-.sidebar-group-toggle[aria-expanded="true"] .sidebar-chevron { transform: rotate(180deg); }
-.sidebar-group-item > .collapse > .nav-item > .sidebar-link { padding-left: 1.5rem; }
-.sidebar-group-label-text {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: .06em !important;
-  color: #444 !important;
-}
-</style>
+
+
