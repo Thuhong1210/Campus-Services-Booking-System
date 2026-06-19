@@ -23,6 +23,7 @@ $postActionMap = [
     'mark-read' => 'markRead', 'mark-all-read' => 'markAllRead',
     'generate' => 'generate', 'export-csv' => 'exportCsv',
     'check-conflict' => 'checkConflict',
+    'upload-avatar' => 'uploadAvatar',
 ];
 
 $routes = [
