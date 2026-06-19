@@ -1,12 +1,24 @@
 <div class="page-header mb-4">
-  <h1 class="h3 fw-bold">Create Booking</h1>
-  <p class="text-muted mb-0">Submit a booking request. The system validates availability, conflicts, and policies on the server.</p>
+  <h1 class="h3 fw-bold"><?= e($title ?? 'Create Booking') ?></h1>
+  <p class="text-muted mb-0">Submit a booking request. All validation runs on the server before saving.</p>
 </div>
 <div class="row g-4">
   <div class="col-lg-8">
     <form method="POST" action="<?= route_url('bookings', 'store') ?>" class="card p-4" id="bookingForm">
       <?= csrf_field() ?>
       <div class="row g-3">
+        <?php if (!empty($canSupervise)): ?>
+        <div class="col-12">
+          <label class="form-label fw-medium">Book For Student (Supervised)</label>
+          <select name="student_user_id" class="form-select">
+            <option value="">Myself / Current User</option>
+            <?php foreach ($students ?? [] as $s): ?>
+              <option value="<?= $s['id'] ?>" <?= old('student_user_id') == $s['id'] ? 'selected' : '' ?>><?= e($s['full_name']) ?> — <?= e($s['email']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <div class="form-text">Lecturers and admins can create supervised bookings for academic activities.</div>
+        </div>
+        <?php endif; ?>
         <div class="col-md-6">
           <label class="form-label fw-medium">Select Resource *</label>
           <select name="resource_id" class="form-select" required>
@@ -54,7 +66,7 @@
       <div class="checklist-item"><i class="bi bi-check-circle-fill"></i> Booking policy validation</div>
       <div class="checklist-item"><i class="bi bi-check-circle-fill"></i> Peak-hour limit (max 2/week)</div>
       <div class="checklist-item"><i class="bi bi-check-circle-fill"></i> Approval requirement</div>
-      <div class="checklist-item"><i class="bi bi-check-circle-fill"></i> Maintenance schedule check</div>
+      <div class="checklist-item"><i class="bi bi-check-circle-fill"></i> Operating hours / time slots</div>
       <hr>
       <p class="small text-muted mb-0">Laboratory and Media Studio bookings require lecturer/admin approval.</p>
     </div>
