@@ -5,7 +5,7 @@
 
 # Cấu hình các thông số
 PROJECT_DIR="/var/www/campus-booking"
-BRANCH="Thuhong_new"
+BRANCH="main"
 PHP_FPM_SERVICE="php8.2-fpm" # Thay đổi thành php8.3-fpm nếu sử dụng PHP 8.3
 
 echo "=================================================="
