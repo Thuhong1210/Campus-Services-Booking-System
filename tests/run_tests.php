@@ -81,15 +81,23 @@ test('Student can create a valid booking', function () use ($far) {
 });
 
 // 6. Conflict blocked
-test('Student blocked on overlapping booking', function () {
+test('Student blocked on overlapping booking', function () use ($baseOffset) {
     $bs = new BookingService();
-    $date = date('Y-m-d', strtotime('+1 day'));
-    $r = $bs->createBooking([
+    $mon = date('Y-m-d', strtotime('monday', strtotime('+' . ($baseOffset + 5) . ' days')));
+    $r1 = $bs->createBooking([
         'user_id' => 2, 'resource_id' => 1,
-        'start_datetime' => "$date 08:00:00", 'end_datetime' => "$date 10:00:00",
+        'start_datetime' => "$mon 10:00:00", 'end_datetime' => "$mon 12:00:00",
+        'purpose' => 'Conflict setup',
+    ]);
+    if (!$r1['success']) {
+        return 'Setup failed: ' . ($r1['message'] ?? '');
+    }
+    $r2 = $bs->createBooking([
+        'user_id' => 2, 'resource_id' => 1,
+        'start_datetime' => "$mon 10:00:00", 'end_datetime' => "$mon 12:00:00",
         'purpose' => 'Conflict test',
     ]);
-    return $r['success'] === false && str_contains($r['message'], 'already booked');
+    return $r2['success'] === false && str_contains($r2['message'], 'already booked');
 });
 
 // 7. Maintenance resource blocked
@@ -108,7 +116,7 @@ test('Student blocked booking maintenance resource', function () {
 test('Student blocked after 2 peak-hour bookings per week', function () use ($baseOffset) {
     $bs = new BookingService();
     $userId = 6;
-    $base = strtotime('+' . ($baseOffset + 50) . ' days');
+    $base = strtotime('+' . ($baseOffset + 300) . ' days');
     $mon = date('Y-m-d', strtotime('monday', $base));
     $tue = date('Y-m-d', strtotime('tuesday', strtotime($mon)));
     $wed = date('Y-m-d', strtotime('wednesday', strtotime($mon)));
@@ -120,12 +128,12 @@ test('Student blocked after 2 peak-hour bookings per week', function () use ($ba
 });
 
 // 9. Lab booking pending
-test('Laboratory booking becomes pending', function () use ($far) {
+test('Laboratory booking becomes pending', function () use ($baseOffset) {
     $bs = new BookingService();
-    $date = $far(75);
+    $mon = date('Y-m-d', strtotime('monday', strtotime('+' . ($baseOffset + 75) . ' days')));
     $r = $bs->createBooking([
         'user_id' => 2, 'resource_id' => 3,
-        'start_datetime' => "$date 08:00:00", 'end_datetime' => "$date 10:00:00",
+        'start_datetime' => "$mon 08:00:00", 'end_datetime' => "$mon 10:00:00",
         'purpose' => 'Lab session',
     ]);
     return $r['success'] === true && ($r['booking']['status'] ?? '') === 'pending';
@@ -143,12 +151,13 @@ test('Lecturer can approve a booking', function () {
 });
 
 // 11. Reject test
-test('Lecturer can reject a booking', function () use ($far) {
+test('Lecturer can reject a booking', function () use ($baseOffset) {
     $bs = new BookingService();
-    $date = $far(80);
+    $base = strtotime('+' . ($baseOffset + 80) . ' days');
+    $wed = date('Y-m-d', strtotime('wednesday', strtotime('monday', $base)));
     $created = $bs->createBooking([
         'user_id' => 2, 'resource_id' => 8,
-        'start_datetime' => "$date 14:00:00", 'end_datetime' => "$date 16:00:00",
+        'start_datetime' => "$wed 14:00:00", 'end_datetime' => "$wed 16:00:00",
         'purpose' => 'Media studio test',
     ]);
     if (!$created['success']) return 'Could not create pending booking: ' . ($created['message']??'');
