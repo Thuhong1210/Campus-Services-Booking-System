@@ -9,9 +9,8 @@
 <link href="<?= asset('css/style.css') ?>" rel="stylesheet">
 </head>
 <body class="auth-body">
-<div class="auth-overlay"></div>
 <div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
-  <div class="auth-card card border-0 shadow-lg" style="max-width:440px;width:100%">
+  <div class="auth-card card" style="max-width:440px;width:100%">
     <div class="card-top-bar"></div>
     <div class="card-body p-4 p-md-5">
       <div class="text-center mb-4">
