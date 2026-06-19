@@ -1,31 +1,65 @@
 <form method="POST" action="<?= url('login.php') ?>">
   <?= csrf_field() ?>
+
+  <!-- ─── Login Field ────────────────────────────────────────── -->
   <div class="mb-3">
-    <label class="form-label fw-medium">Student ID / Email / Username</label>
+    <label class="form-label fw-medium" for="login">Student ID / Email / Username</label>
     <div class="input-group">
-      <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
-      <input type="text" name="login" class="form-control" value="<?= e(old('login')) ?>" placeholder="student@example.com" required autofocus>
+      <span class="input-group-text">
+        <i class="bi bi-person"></i>
+      </span>
+      <input
+        type="text"
+        id="login"
+        name="login"
+        class="form-control"
+        placeholder="student@example.com"
+        value="<?= e(old('login')) ?>"
+        required
+        autofocus
+      >
     </div>
   </div>
-  <div class="mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-      <label class="form-label fw-medium mb-0">Password</label>
-      <a href="<?= route_url('forgot-password') ?>" class="small text-primary text-decoration-none">Forgot password?</a>
+
+  <!-- ─── Password Field ────────────────────────────────────── -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <label class="form-label fw-medium mb-0" for="password">Password</label>
+      <a href="<?= route_url('forgot-password') ?>" class="small text-decoration-none" style="color:var(--primary)">
+        Forgot password?
+      </a>
     </div>
-    <div class="input-group mt-1">
-      <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
-      <input type="password" name="password" class="form-control" required>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-lock"></i>
+      </span>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        class="form-control"
+        placeholder="Enter your password"
+        required
+      >
     </div>
   </div>
-  <div class="mb-4 form-check">
-    <input type="checkbox" class="form-check-input" id="remember">
-    <label class="form-check-label small" for="remember">Remember me on this device</label>
+
+  <!-- ─── Submit ────────────────────────────────────────────── -->
+  <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3">
+    Sign In to Campus Services
+  </button>
+
+  <!-- ─── Demo Credentials ──────────────────────────────────── -->
+  <div class="rounded-3 p-3" style="background:var(--bg-muted);font-size:12.5px;color:var(--text-sub)">
+    <div class="fw-semibold mb-2" style="color:var(--text-main)">
+      <i class="bi bi-info-circle me-1" style="color:var(--primary)"></i>
+      Demo Accounts
+    </div>
+    <div class="d-flex flex-column gap-1">
+      <div><strong>Admin:</strong> admin@example.com / admin123</div>
+      <div><strong>Student:</strong> student@example.com / student123</div>
+      <div><strong>Lecturer:</strong> lecturer@example.com / lecturer123</div>
+    </div>
   </div>
-  <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Sign In to Campus Services</button>
-  <div class="mt-4 p-3 bg-light rounded-3 small text-muted">
-    <div class="fw-semibold text-dark mb-1">Demo Accounts</div>
-    Admin: admin@example.com / admin123<br>
-    Student: student@example.com / student123<br>
-    Lecturer: lecturer@example.com / lecturer123
-  </div>
+
 </form>

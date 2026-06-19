@@ -14,7 +14,7 @@ define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 define('APP_NAME', 'Campus Services Booking System');
-define('APP_URL', '/campus-services-booking/public');
+define('APP_URL', '');
 define('SESSION_NAME', 'csbs_session');
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');

@@ -1,93 +1,137 @@
 <?php
-$avatarUrl = !empty($user['avatar'])
-    ? asset('avatars/' . $user['avatar'])
-    : null;
-$initials = strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explode(' ', $user['full_name']), 0, 2))));
-$roles = implode(', ', array_column($user['roles'] ?? [], 'role_name'));
+$avatarUrl = !empty($user['avatar']) ? asset('avatars/' . $user['avatar']) : null;
+$initials  = strtoupper(implode('', array_map(
+    fn($w) => $w[0],
+    array_slice(explode(' ', $user['full_name']), 0, 2)
+)));
+$rolesList = implode(', ', array_column($user['roles'] ?? [], 'role_name'));
 ?>
 
-<div class="mb-4"><h1 class="h3 fw-bold">My Profile</h1></div>
+<!-- ─── Page Header ──────────────────────────────────────────── -->
+<div class="mb-4">
+  <h1 class="fw-bold mb-0">My Profile</h1>
+  <p class="text-muted mb-0" style="font-size:13.5px">Manage your personal information and account settings.</p>
+</div>
 
 <div class="row g-4">
 
-  <!-- Left: Avatar card -->
-  <div class="col-md-3">
-    <div class="card shadow-sm text-center p-4" style="border-radius:16px">
-      <div class="mb-3 position-relative d-inline-block mx-auto">
-        <?php if ($avatarUrl): ?>
+  <!-- ─── Left: Avatar Card ────────────────────────────────── -->
+  <div class="col-md-4 col-lg-3">
+    <div class="card text-center">
+      <div class="card-body py-4">
+
+        <!-- Avatar -->
+        <div class="mb-3 position-relative d-inline-block">
+          <?php if ($avatarUrl): ?>
           <img src="<?= $avatarUrl ?>" alt="Avatar"
-               class="rounded-circle border border-3 border-primary shadow"
-               style="width:110px;height:110px;object-fit:cover">
-        <?php else: ?>
-          <div class="rounded-circle border border-3 border-primary shadow d-flex align-items-center justify-content-center bg-primary text-white fw-bold mx-auto"
-               style="width:110px;height:110px;font-size:36px">
+               class="rounded-circle"
+               style="width:100px;height:100px;object-fit:cover;border:3px solid var(--border)">
+          <?php else: ?>
+          <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto"
+               style="width:100px;height:100px;font-size:2rem;background:var(--primary-soft);color:var(--primary);border:3px solid var(--border)">
             <?= $initials ?>
           </div>
-        <?php endif; ?>
-      </div>
-      <h5 class="fw-bold mb-0"><?= e($user['full_name']) ?></h5>
-      <span class="badge bg-primary-subtle text-primary mt-1"><?= e($roles) ?></span>
-      <?php if (!empty($user['student_code'])): ?>
-        <p class="text-muted small mt-2 mb-0"><i class="bi bi-person-badge me-1"></i><?= e($user['student_code']) ?></p>
-      <?php endif; ?>
-      <?php if (!empty($user['staff_code'])): ?>
-        <p class="text-muted small mt-2 mb-0"><i class="bi bi-briefcase me-1"></i><?= e($user['staff_code']) ?></p>
-      <?php endif; ?>
-      <p class="text-muted small mb-0 mt-1"><i class="bi bi-envelope me-1"></i><?= e($user['email']) ?></p>
+          <?php endif; ?>
+        </div>
 
-      <!-- Avatar upload form -->
-      <form method="POST" action="<?= url('index.php?page=profile&action=upload-avatar') ?>"
-            enctype="multipart/form-data" class="mt-3">
-        <?= csrf_field() ?>
-        <label class="btn btn-outline-primary btn-sm w-100" style="border-radius:20px;cursor:pointer">
-          <i class="bi bi-camera me-1"></i> Change Photo
-          <input type="file" name="avatar" accept="image/*" class="d-none"
-                 onchange="this.form.submit()">
-        </label>
-      </form>
+        <!-- Name & Role -->
+        <h5 class="fw-bold mb-1"><?= e($user['full_name']) ?></h5>
+        <div class="mb-2">
+          <span class="badge" style="background:var(--primary-soft);color:var(--primary);font-weight:600">
+            <?= e($rolesList) ?>
+          </span>
+        </div>
+
+        <!-- Quick info -->
+        <div class="d-flex flex-column gap-1 text-start mt-3" style="font-size:13px;color:var(--text-sub)">
+          <div><i class="bi bi-envelope me-2" style="color:var(--text-muted)"></i><?= e($user['email']) ?></div>
+          <?php if (!empty($user['student_code'])): ?>
+          <div><i class="bi bi-mortarboard me-2" style="color:var(--text-muted)"></i><?= e($user['student_code']) ?></div>
+          <?php endif; ?>
+          <?php if (!empty($user['staff_code'])): ?>
+          <div><i class="bi bi-briefcase me-2" style="color:var(--text-muted)"></i><?= e($user['staff_code']) ?></div>
+          <?php endif; ?>
+          <?php if (!empty($user['phone'])): ?>
+          <div><i class="bi bi-telephone me-2" style="color:var(--text-muted)"></i><?= e($user['phone']) ?></div>
+          <?php endif; ?>
+        </div>
+
+        <!-- Change Photo -->
+        <form method="POST" action="<?= route_url('profile', 'upload-avatar') ?>"
+              enctype="multipart/form-data" class="mt-4">
+          <?= csrf_field() ?>
+          <label class="btn btn-light w-100" style="cursor:pointer">
+            <i class="bi bi-camera me-2"></i>Change Photo
+            <input type="file" name="avatar" accept="image/*" class="d-none"
+                   onchange="this.form.submit()">
+          </label>
+        </form>
+      </div>
     </div>
   </div>
 
-  <!-- Right: Edit form -->
-  <div class="col-md-9">
-    <div class="card shadow-sm p-4" style="border-radius:16px">
-      <h5 class="fw-semibold mb-4 border-bottom pb-2">Personal Information</h5>
-      <form method="POST" action="<?= url('index.php?page=profile&action=update') ?>">
-        <?= csrf_field() ?>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Full Name</label>
-            <input name="full_name" class="form-control" value="<?= e($user['full_name']) ?>" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Email</label>
-            <input type="email" class="form-control bg-light" value="<?= e($user['email']) ?>" readonly>
-            <input type="hidden" name="email" value="<?= e($user['email']) ?>">
-            <small class="text-muted">Email cannot be changed</small>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Phone</label>
-            <input name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" placeholder="Enter phone number">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Department</label>
-            <select name="department_id" class="form-select">
-              <option value="">-- Select Department --</option>
-              <?php foreach($departments as $d): ?>
-                <option value="<?= $d['id'] ?>" <?= ($user['department_id'] ?? '') == $d['id'] ? 'selected' : '' ?>>
-                  <?= e($d['department_name']) ?>
+  <!-- ─── Right: Edit Form ─────────────────────────────────── -->
+  <div class="col-md-8 col-lg-9">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-person-fill me-2" style="color:var(--primary)"></i>
+        Personal Information
+      </div>
+      <div class="card-body">
+        <form method="POST" action="<?= route_url('profile', 'update') ?>">
+          <?= csrf_field() ?>
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="full_name" class="form-control"
+                     value="<?= e($user['full_name']) ?>" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control"
+                     value="<?= e($user['email']) ?>"
+                     style="background:var(--bg-muted);color:var(--text-muted)"
+                     readonly>
+              <input type="hidden" name="email" value="<?= e($user['email']) ?>">
+              <div class="form-text"><i class="bi bi-lock me-1"></i>Email cannot be changed.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" name="phone" class="form-control"
+                     value="<?= e($user['phone'] ?? '') ?>"
+                     placeholder="e.g. 0901234567">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Department</label>
+              <select name="department_id" class="form-select">
+                <option value="">— Not assigned —</option>
+                <?php foreach ($departments as $dept): ?>
+                <option value="<?= $dept['id'] ?>"
+                        <?= ($user['department_id'] ?? '') == $dept['id'] ? 'selected' : '' ?>>
+                  <?= e($dept['department_name']) ?>
                 </option>
-              <?php endforeach; ?>
-            </select>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+          </div><!-- /.row -->
+
+          <!-- Actions -->
+          <div class="d-flex gap-2 mt-4 pt-3" style="border-top:var(--border-thin)">
+            <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill"></i> Save Changes
+            </button>
+            <a href="<?= route_url('change-password') ?>" class="btn btn-light d-flex align-items-center gap-2">
+              <i class="bi bi-lock"></i> Change Password
+            </a>
           </div>
-        </div>
-        <div class="mt-4 d-flex gap-2">
-          <button class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>Update Profile</button>
-          <a href="<?= url('index.php?page=change-password') ?>" class="btn btn-outline-secondary px-4">
-            <i class="bi bi-lock me-1"></i>Change Password
-          </a>
-        </div>
-      </form>
+
+        </form>
+      </div>
     </div>
   </div>
 
