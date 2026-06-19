@@ -6,12 +6,14 @@ class MaintenanceController extends Controller
 {
     private MaintenanceRepository $maintenanceRepo;
     private ResourceRepository $resourceRepo;
+    private BookingRepository $bookingRepo;
     private AuditLogService $auditLog;
 
     public function __construct()
     {
         $this->maintenanceRepo = new MaintenanceRepository();
         $this->resourceRepo = new ResourceRepository();
+        $this->bookingRepo = new BookingRepository();
         $this->auditLog = new AuditLogService();
     }
 
@@ -52,6 +54,24 @@ class MaintenanceController extends Controller
         $id = $this->maintenanceRepo->create($data);
         $this->resourceRepo->update((int) $data['resource_id'], ['status' => 'maintenance']);
         $this->auditLog->log('update_resource', 'maintenance_schedules', $id, null, $data);
+
+        $resource = $this->resourceRepo->findById((int) $data['resource_id']);
+        $notificationService = new NotificationService();
+        if ($resource) {
+            $affected = $this->bookingRepo->findAll([
+                'resource_id' => (string) $data['resource_id'],
+                'date_from' => $data['maintenance_start'],
+                'date_to' => $data['maintenance_end'],
+            ], 100, 0);
+            $notified = [];
+            foreach ($affected as $booking) {
+                if (in_array($booking['status'], ['pending', 'approved'], true) && !isset($notified[$booking['user_id']])) {
+                    $notificationService->notifyMaintenance((int) $booking['user_id'], $resource, $data['reason']);
+                    $notified[$booking['user_id']] = true;
+                }
+            }
+        }
+
         Flash::success('Maintenance scheduled.');
         redirect('index.php?page=maintenance');
     }
