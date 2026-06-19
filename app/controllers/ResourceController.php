@@ -208,6 +208,7 @@ class ResourceController extends Controller
         $filters = [
             'search' => trim((string) ($this->get()['search'] ?? '')),
             'category_id' => $this->get()['category_id'] ?? '',
+            'location' => trim((string) ($this->get()['location'] ?? '')),
         ];
 
         $resources = $this->resourceRepo->findAvailable($filters);

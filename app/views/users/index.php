@@ -74,7 +74,7 @@
           <th>Role</th>
           <th>Department</th>
           <th>Status</th>
-          <th style="width:120px">Actions</th>
+          <th style="width:170px">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -111,6 +111,20 @@
                  class="btn btn-sm btn-light" title="Edit">
                 <i class="bi bi-pencil"></i>
               </a>
+              <?php if ($u['status'] === 'active'): ?>
+              <form method="POST" action="<?= route_url('users', 'deactivate', ['id' => $u['id']]) ?>" class="d-inline" onsubmit="return confirm('Deactivate this user?')">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-sm btn-light text-warning" title="Deactivate">
+                  <i class="bi bi-person-x"></i>
+                </button>
+              </form>
+              <?php endif; ?>
+              <form method="POST" action="<?= route_url('users', 'delete', ['id' => $u['id']]) ?>" class="d-inline" onsubmit="return confirm('Delete this user permanently?')">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-sm btn-light text-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
             </div>
           </td>
         </tr>

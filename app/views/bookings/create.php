@@ -26,9 +26,24 @@
 
           <div class="row g-3">
 
+            <?php if (!empty($canSupervise)): ?>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Book For Student (Supervised)</label>
+              <select name="student_user_id" class="form-select">
+                <option value="">Myself / Current User</option>
+                <?php foreach ($students ?? [] as $s): ?>
+                  <option value="<?= $s['id'] ?>" <?= old('student_user_id') == $s['id'] ? 'selected' : '' ?>>
+                    <?= e($s['full_name']) ?> — <?= e($s['email']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <div class="form-text"><i class="bi bi-info-circle me-1"></i>Lecturers and admins can create supervised bookings for academic activities.</div>
+            </div>
+            <?php endif; ?>
+
             <!-- Resource -->
             <div class="col-12">
-              <label class="form-label">Select Resource <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">Select Resource <span class="text-danger">*</span></label>
               <select name="resource_id" id="resourceSelect" class="form-select" required>
                 <option value="">— Choose a resource —</option>
                 <?php foreach ($resources as $r): ?>
@@ -41,7 +56,7 @@
 
             <!-- Date -->
             <div class="col-md-4">
-              <label class="form-label">Date <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
               <input
                 type="date"
                 name="booking_date"
@@ -55,7 +70,7 @@
 
             <!-- Start Time -->
             <div class="col-md-4">
-              <label class="form-label">Start Time <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">Start Time <span class="text-danger">*</span></label>
               <input
                 type="time"
                 name="start_time"
@@ -68,7 +83,7 @@
 
             <!-- End Time -->
             <div class="col-md-4">
-              <label class="form-label">End Time <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">End Time <span class="text-danger">*</span></label>
               <input
                 type="time"
                 name="end_time"
@@ -86,7 +101,7 @@
 
             <!-- Purpose -->
             <div class="col-12">
-              <label class="form-label">Booking Purpose <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">Booking Purpose <span class="text-danger">*</span></label>
               <input
                 type="text"
                 name="purpose"
@@ -99,7 +114,7 @@
 
             <!-- Notes -->
             <div class="col-12">
-              <label class="form-label">Additional Notes</label>
+              <label class="form-label fw-semibold">Additional Notes</label>
               <textarea name="additional_notes" class="form-control" rows="3"
                         placeholder="Any special requirements or details (optional)"><?= e(old('additional_notes')) ?></textarea>
             </div>

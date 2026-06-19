@@ -70,7 +70,7 @@ $sc = $statusColor[$booking['status']] ?? $statusColor['pending'];
 
     <!-- Approval History -->
     <?php if (!empty($approvals)): ?>
-    <div class="card">
+    <div class="card mb-4">
       <div class="card-header">
         <i class="bi bi-clock-history me-2" style="color:var(--info)"></i>
         Approval History
@@ -93,6 +93,17 @@ $sc = $statusColor[$booking['status']] ?? $statusColor['pending'];
           <?php endif; ?>
         </div>
         <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Cancellation Record -->
+    <?php if (!empty($cancellation)): ?>
+    <div class="card mt-4 border-secondary">
+      <div class="card-header fw-semibold">Cancellation Record</div>
+      <div class="card-body">
+        <p class="mb-1"><strong>Reason:</strong> <?= e($cancellation['reason']) ?></p>
+        <p class="mb-0 small text-muted">Cancelled at <?= format_datetime($cancellation['cancelled_at']) ?></p>
       </div>
     </div>
     <?php endif; ?>

@@ -157,6 +157,10 @@ class ResourceRepository
             $params[] = $search;
             $params[] = $search;
         }
+        if (!empty($filters['location'])) {
+            $sql .= ' AND r.location LIKE ?';
+            $params[] = '%' . $filters['location'] . '%';
+        }
 
         $sql .= ' ORDER BY r.resource_name ASC';
         $stmt = $this->db->prepare($sql);

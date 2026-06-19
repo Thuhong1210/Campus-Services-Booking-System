@@ -10,6 +10,7 @@ class BookingController extends Controller
     private ResourceCategoryRepository $categoryRepo;
     private CancellationService $cancellationService;
     private ApprovalRepository $approvalRepo;
+    private UserRepository $userRepo;
 
     public function __construct()
     {
@@ -19,6 +20,7 @@ class BookingController extends Controller
         $this->categoryRepo = new ResourceCategoryRepository();
         $this->cancellationService = new CancellationService();
         $this->approvalRepo = new ApprovalRepository();
+        $this->userRepo = new UserRepository();
     }
 
     public function index(): void
@@ -53,11 +55,18 @@ class BookingController extends Controller
     {
         Middleware::auth();
 
+        $canSupervise = Auth::hasAnyRole(['Admin', 'Lecturer', 'Approver']);
+        $students = $canSupervise
+            ? $this->userRepo->all(['role' => 'Student', 'status' => 'active'], 200, 0)
+            : [];
+
         $this->view('bookings/create', [
-            'title' => 'Create Booking',
+            'title' => $canSupervise ? 'Create Supervised Booking' : 'Create Booking',
             'resources' => $this->resourceRepo->findAvailable([]),
             'categories' => $this->categoryRepo->findAll(['status' => 'active']),
             'preselectedResourceId' => (int) ($this->get()['resource_id'] ?? 0),
+            'canSupervise' => $canSupervise,
+            'students' => $students,
         ]);
     }
 
@@ -67,7 +76,13 @@ class BookingController extends Controller
         $this->verifyCsrf();
 
         $data = $this->post();
-        $data['user_id'] = Auth::id();
+        $data['user_id'] = (int) Auth::id();
+        if (!empty($data['student_user_id']) && Auth::hasAnyRole(['Admin', 'Lecturer', 'Approver'])) {
+            $student = $this->userRepo->findById((int) $data['student_user_id']);
+            if ($student && $student['status'] === 'active') {
+                $data['user_id'] = (int) $student['id'];
+            }
+        }
 
         // Combine date and time fields if provided separately
         if (!empty($data['booking_date']) && !empty($data['start_time'])) {
@@ -188,11 +203,19 @@ class BookingController extends Controller
             redirect('index.php?page=bookings/my');
         }
 
+        $approval = $this->approvalRepo->findByBooking($id);
+        $approvals = $approval ? [$approval] : [];
+
         $this->view('bookings/detail', [
             'title' => 'Booking ' . $booking['booking_reference'],
             'booking' => $booking,
-            'approvals' => array_filter([(new ApprovalRepository())->findByBooking($id)]),
+            'approvals' => $approvals,
             'cancellation' => (new CancellationRepository())->findByBooking($id),
+            'canCancel' => in_array($booking['status'], ['pending', 'approved'], true)
+                && (Auth::isAdmin() || (int) $booking['user_id'] === Auth::id()),
+            'canEdit' => in_array($booking['status'], ['pending', 'approved'], true)
+                && strtotime($booking['start_datetime']) >= time()
+                && (Auth::isAdmin() || (int) $booking['user_id'] === Auth::id()),
         ]);
     }
 
@@ -210,25 +233,41 @@ class BookingController extends Controller
 
         $start = $date . ' ' . $startTime . ':00';
         $end = $date . ' ' . $endTime . ':00';
-        $resource = $this->resourceRepo->findById($resourceId);
+        $result = $this->bookingService->checkAvailability(
+            $resourceId,
+            $start,
+            $end,
+            (int) Auth::id()
+        );
+        Response::json($result);
+    }
 
-        if (!$resource) {
-            Response::jsonError('Resource not found.');
-        }
-        if ($resource['status'] !== 'available') {
-            Response::json(['success' => false, 'available' => false, 'message' => 'Resource is not available.']);
-        }
+    public function exportSchedule(): void
+    {
+        Middleware::auth();
 
-        $conflicts = $this->bookingRepo->findConflicts($resourceId, $start, $end);
-        if (!empty($conflicts)) {
-            Response::json([
-                'success' => false,
-                'available' => false,
-                'message' => 'This resource is already booked during the selected time period.',
-            ]);
-        }
+        $filters = array_filter([
+            'status' => $this->get()['status'] ?? '',
+            'category_id' => $this->get()['category_id'] ?? '',
+        ]);
+        $schedule = $this->bookingRepo->findByUser((int) Auth::id(), $filters, 500, 0);
 
-        Response::json(['success' => true, 'available' => true, 'message' => 'Time slot is available.']);
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="my_schedule_' . date('Y-m-d') . '.csv"');
+        echo "\xEF\xBB\xBF";
+        echo "Reference,Resource,Category,Start,End,Status,Purpose\n";
+        foreach ($schedule as $b) {
+            echo implode(',', [
+                $b['booking_reference'],
+                '"' . str_replace('"', '""', $b['resource_name']) . '"',
+                '"' . str_replace('"', '""', $b['category_name'] ?? '') . '"',
+                $b['start_datetime'],
+                $b['end_datetime'],
+                $b['status'],
+                '"' . str_replace('"', '""', $b['purpose']) . '"',
+            ]) . "\n";
+        }
+        exit;
     }
 
     public function myBookings(): void

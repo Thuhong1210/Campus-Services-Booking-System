@@ -139,4 +139,27 @@ class TimeSlotRepository
         $stmt->execute([$resourceId, $dayOfWeek, $endTime, $startTime]);
         return (int) $stmt->fetchColumn() > 0;
     }
+
+    public function isWithinAllowedSlots(int $resourceId, string $startDatetime, string $endDatetime): bool
+    {
+        $slots = $this->findByResource($resourceId);
+        $activeSlots = array_values(array_filter($slots, fn ($s) => (int) ($s['is_active'] ?? 0) === 1));
+        if (empty($activeSlots)) {
+            return true;
+        }
+
+        $dayOfWeek = (int) date('w', strtotime($startDatetime));
+        $startTime = date('H:i:s', strtotime($startDatetime));
+        $endTime = date('H:i:s', strtotime($endDatetime));
+
+        foreach ($activeSlots as $slot) {
+            if ((int) $slot['day_of_week'] === $dayOfWeek
+                && $slot['start_time'] <= $startTime
+                && $slot['end_time'] >= $endTime) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

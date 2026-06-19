@@ -7,11 +7,14 @@ class PolicyService
     private ResourceCategoryRepository $categoryRepo;
     private BookingRepository $bookingRepo;
 
+    private TimeSlotRepository $timeSlotRepo;
+
     public function __construct()
     {
         $this->policyRepo = new BookingPolicyRepository();
         $this->categoryRepo = new ResourceCategoryRepository();
         $this->bookingRepo = new BookingRepository();
+        $this->timeSlotRepo = new TimeSlotRepository();
     }
 
     public function validate(array $data, array $resource, array $userRoles): array
@@ -63,6 +66,14 @@ class PolicyService
         $weeklyCount = $this->bookingRepo->countWeeklyBookings((int) $data['user_id'], $categoryId, $excludeId);
         if ($weeklyCount >= $weeklyQuota) {
             $errors[] = sprintf('Weekly booking quota reached (max %d bookings).', $weeklyQuota);
+        }
+
+        if (!$this->timeSlotRepo->isWithinAllowedSlots(
+            (int) $resource['id'],
+            $data['start_datetime'],
+            $data['end_datetime']
+        )) {
+            $errors[] = 'The selected time is outside the allowed operating hours for this resource.';
         }
 
         return $errors;

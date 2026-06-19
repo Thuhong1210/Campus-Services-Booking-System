@@ -10,7 +10,7 @@
 </div>
 
 <!-- ─── Bookings Table ────────────────────────────────────────── -->
-<div class="card">
+<div class="card mb-3">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead>
@@ -89,6 +89,8 @@
     </table>
   </div>
 </div>
+
+<?php require VIEW_PATH.'/partials/pagination.php'; ?>
 
 <!-- ─── Cancel Modals ─────────────────────────────────────────── -->
 <?php foreach ($bookings as $b): ?>

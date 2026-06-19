@@ -1,6 +1,6 @@
 <?php
 $initials = strtoupper(substr($user['full_name'] ?? 'U', 0, 1));
-$roleList  = implode(', ', $userRoles ?? []);
+$roleList = implode(', ', $user['roles'] ?? []);
 ?>
 
 <!-- ─── Page Header ──────────────────────────────────────────── -->
@@ -95,7 +95,7 @@ $roleList  = implode(', ', $userRoles ?? []);
               </td>
               <td class="fw-medium"><?= e($booking['resource_name']) ?></td>
               <td style="color:var(--text-sub);font-size:13px">
-                <?= format_datetime($booking['start_datetime']) ?>
+                 <?= format_datetime($booking['start_datetime']) ?>
               </td>
               <td><?= status_badge($booking['status']) ?></td>
             </tr>

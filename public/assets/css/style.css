@@ -602,3 +602,14 @@ a:hover { color: var(--primary-hover); }
   .main-content { padding: .85rem !important; }
   .card-body { padding: 14px !important; }
 }
+
+/* =====================================================================
+   ADDITIONAL CUSTOM CLASSES
+   ===================================================================== */
+.empty-state {
+  border: 2px dashed #dee2e6;
+  background: #fafbfc;
+}
+.resource-card-img {
+  height: 120px;
+}

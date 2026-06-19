@@ -4,7 +4,7 @@ $initials  = strtoupper(implode('', array_map(
     fn($w) => $w[0],
     array_slice(explode(' ', $user['full_name']), 0, 2)
 )));
-$rolesList = implode(', ', array_column($user['roles'] ?? [], 'role_name'));
+$rolesList = implode(', ', $user['roles'] ?? Auth::roles());
 ?>
 
 <!-- ─── Page Header ──────────────────────────────────────────── -->
