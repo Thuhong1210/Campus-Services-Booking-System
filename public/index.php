@@ -58,9 +58,26 @@ if ($method === 'POST') {
     $action = $postActionMap[$action] ?? $action;
 }
 
-$getActionMap = ['check-conflict' => 'checkConflict'];
-if ($method === 'GET' && isset($getActionMap[$action])) {
-    $action = $getActionMap[$action];
+$actionMap = [
+    'my' => 'myBookings',
+    'my-bookings' => 'myBookings',
+    'my_bookings' => 'myBookings',
+    'my-schedule' => 'mySchedule',
+    'my_schedule' => 'mySchedule',
+    'check-conflict' => 'checkConflict',
+    'check_conflict' => 'checkConflict',
+    'mark-read' => 'markRead',
+    'mark_read' => 'markRead',
+    'mark-all-read' => 'markAllRead',
+    'mark_all_read' => 'markAllRead',
+    'export-csv' => 'exportCsv',
+    'export_csv' => 'exportCsv',
+    'upload-avatar' => 'uploadAvatar',
+    'upload_avatar' => 'uploadAvatar',
+];
+
+if (isset($actionMap[$action])) {
+    $action = $actionMap[$action];
 }
 
 $methodName = $action;

@@ -127,7 +127,7 @@ class UserRepository
     {
         $this->db->beginTransaction();
         try {
-            $fields = ['department_id', 'full_name', 'username', 'email', 'phone', 'student_code', 'staff_code', 'status'];
+            $fields = ['department_id', 'full_name', 'username', 'email', 'phone', 'student_code', 'staff_code', 'status', 'avatar'];
             $sets = [];
             $params = [];
             foreach ($fields as $f) {
