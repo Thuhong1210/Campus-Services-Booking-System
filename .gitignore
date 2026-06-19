@@ -14,6 +14,7 @@
 # Environment
 .env
 .env.*
+!.env.example
 
 # Vendor
 vendor/
