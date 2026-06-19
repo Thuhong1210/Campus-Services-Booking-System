@@ -8,6 +8,10 @@
 <div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 <?php foreach($users as $u): ?><tr><td><?= $u['id'] ?></td><td><?= e($u['full_name']) ?></td><td><?= e($u['email']) ?></td><td><?= e($u['roles']??'') ?></td><td><?= e($u['department_name']??'-') ?></td><td><?= status_badge($u['status'],'resource') ?></td>
 <td><a href="<?= url('index.php?page=users&action=show&id='.$u['id']) ?>" class="btn btn-sm btn-outline-primary">View</a>
-<a href="<?= url('index.php?page=users&action=edit&id='.$u['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a></td></tr><?php endforeach; ?>
+<a href="<?= url('index.php?page=users&action=edit&id='.$u['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+<?php if ($u['status'] === 'active'): ?>
+<form method="POST" action="<?= url('index.php?page=users&action=deactivate&id='.$u['id']) ?>" class="d-inline" onsubmit="return confirm('Deactivate this user?')"><?= csrf_field() ?><button class="btn btn-sm btn-outline-warning">Deactivate</button></form>
+<?php endif; ?>
+<form method="POST" action="<?= url('index.php?page=users&action=delete&id='.$u['id']) ?>" class="d-inline" onsubmit="return confirm('Delete this user permanently?')"><?= csrf_field() ?><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr><?php endforeach; ?>
 </tbody></table></div></div>
 <?php require VIEW_PATH.'/partials/pagination.php'; ?>
