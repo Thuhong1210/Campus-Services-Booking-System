@@ -42,7 +42,7 @@ $routes = [
     'notifications' => ['NotificationController', ['index' => [Middleware::class, 'auth'], 'markRead' => [Middleware::class, 'auth'], 'markAllRead' => [Middleware::class, 'auth']]],
     'reports' => ['ReportController', ['index' => [Middleware::class, 'admin'], 'generate' => [Middleware::class, 'admin'], 'exportCsv' => [Middleware::class, 'admin']]],
     'audit-logs' => ['AuditLogController', ['index' => [Middleware::class, 'admin']]],
-    'profile' => ['ProfileController', ['index' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth']]],
+    'profile' => ['ProfileController', ['index' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth'], 'upload-avatar' => [Middleware::class, 'auth']]],
     'settings' => ['SettingsController', ['index' => [Middleware::class, 'admin']]],
 ];
 
