@@ -96,6 +96,54 @@ class ProfileController extends Controller
         redirect('index.php?page=profile');
     }
 
+    public function uploadAvatar(): void
+    {
+        Middleware::auth();
+        $this->verifyCsrf();
+
+        $userId = (int) Auth::id();
+
+        if (empty($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            Flash::error('No file uploaded.');
+            redirect('index.php?page=profile');
+        }
+
+        $file = $_FILES['avatar'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime, $allowedTypes)) {
+            Flash::error('Only JPG, PNG, GIF, WEBP images are allowed.');
+            redirect('index.php?page=profile');
+        }
+
+        if ($file['size'] > 2 * 1024 * 1024) {
+            Flash::error('Image must be under 2MB.');
+            redirect('index.php?page=profile');
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'avatar_' . $userId . '_' . time() . '.' . strtolower($ext);
+        $uploadDir = dirname(__DIR__, 2) . '/public/assets/avatars/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+            Flash::error('Failed to upload image.');
+            redirect('index.php?page=profile');
+        }
+
+        $this->userRepo->update($userId, ['avatar' => $filename], $this->getCurrentRoleIds($userId));
+        $_SESSION['user']['avatar'] = $filename;
+
+        Flash::success('Profile photo updated successfully.');
+        redirect('index.php?page=profile');
+    }
+
     private function getCurrentRoleIds(int $userId): array
     {
         $db = Database::getInstance()->getConnection();
