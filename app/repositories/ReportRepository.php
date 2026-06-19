@@ -12,15 +12,20 @@ class ReportRepository
 
     public function findAll(array $filters = [], int $limit = 20, int $offset = 0): array
     {
-        $sql = 'SELECT ur.*, r.resource_name, r.resource_code
+        $sql = 'SELECT ur.*, r.resource_name, r.resource_code, rc.category_name
                 FROM usage_reports ur
                 JOIN resources r ON r.id = ur.resource_id
+                JOIN resource_categories rc ON rc.id = r.category_id
                 WHERE 1=1';
         $params = [];
 
         if (!empty($filters['resource_id'])) {
             $sql .= ' AND ur.resource_id = ?';
             $params[] = $filters['resource_id'];
+        }
+        if (!empty($filters['category_id'])) {
+            $sql .= ' AND r.category_id = ?';
+            $params[] = $filters['category_id'];
         }
         if (!empty($filters['report_type'])) {
             $sql .= ' AND ur.report_type = ?';
@@ -170,5 +175,36 @@ class ReportRepository
             'top_resources' => $topResources,
             'peak_vs_off_peak' => $peakVsOffPeak ?: ['peak' => 0, 'off_peak' => 0],
         ];
+    }
+
+    public function getUtilizationInsights(int $limit = 5): array
+    {
+        $overused = $this->db->query(
+            'SELECT r.resource_name, r.resource_code, rc.category_name, COUNT(b.id) AS booking_count,
+                    COALESCE(SUM(TIMESTAMPDIFF(MINUTE, b.start_datetime, b.end_datetime) / 60.0), 0) AS total_hours
+             FROM bookings b
+             JOIN resources r ON r.id = b.resource_id
+             JOIN resource_categories rc ON rc.id = r.category_id
+             WHERE b.status IN ("approved", "completed")
+             AND b.start_datetime >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+             GROUP BY r.id, r.resource_name, r.resource_code, rc.category_name
+             ORDER BY booking_count DESC
+             LIMIT ' . (int) $limit
+        )->fetchAll();
+
+        $underused = $this->db->query(
+            'SELECT r.resource_name, r.resource_code, rc.category_name, COUNT(b.id) AS booking_count
+             FROM resources r
+             JOIN resource_categories rc ON rc.id = r.category_id
+             LEFT JOIN bookings b ON b.resource_id = r.id
+                AND b.status IN ("approved", "completed")
+                AND b.start_datetime >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+             WHERE r.status = "available"
+             GROUP BY r.id, r.resource_name, r.resource_code, rc.category_name
+             ORDER BY booking_count ASC, r.resource_name ASC
+             LIMIT ' . (int) $limit
+        )->fetchAll();
+
+        return ['overused' => $overused, 'underused' => $underused];
     }
 }
