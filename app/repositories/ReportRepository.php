@@ -36,7 +36,9 @@ class ReportRepository
             $params[] = $filters['period_start'];
         }
         if (!empty($filters['period_end'])) {
-            $sql .= ' AND ur.period_end <= ?';
+            // Match reports whose period overlaps with the selected range
+            // (period starts on or before the filter end-date)
+            $sql .= ' AND ur.period_start <= ?';
             $params[] = $filters['period_end'];
         }
 
