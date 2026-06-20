@@ -87,7 +87,9 @@ class BookingService
 
         $status = 'approved';
         if ($requiresApproval && !$canAutoApprove) {
-            $status = 'pending';
+            if (!in_array('Lecturer', $userRoles, true) && !in_array('Admin', $userRoles, true)) {
+                $status = 'pending';
+            }
         }
 
         $reference = $this->bookingRepo->generateReference();
