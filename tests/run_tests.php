@@ -32,14 +32,14 @@ echo "=== Campus Services Booking System Tests ===\n\n";
 // 1. Login works
 test('Correct login works', function () {
     $svc = new AuthService();
-    $r = $svc->login('admin@example.com', 'admin123');
+    $r = $svc->login('admin@is.vnu.edu.vn', 'admin123');
     return $r['success'] === true;
 });
 
 // 2. Wrong password
 test('Incorrect password shows error', function () {
     $svc = new AuthService();
-    $r = $svc->login('admin@example.com', 'wrongpass');
+    $r = $svc->login('admin@is.vnu.edu.vn', 'wrongpass');
     return $r['success'] === false;
 });
 
@@ -73,7 +73,7 @@ test('Student can create a valid booking', function () use ($far) {
     $bs = new BookingService();
     $date = $far(60);
     $r = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 2,
+        'user_id' => 9, 'resource_id' => 2,
         'start_datetime' => "$date 10:00:00", 'end_datetime' => "$date 12:00:00",
         'purpose' => 'Test booking',
     ]);
@@ -85,16 +85,16 @@ test('Student blocked on overlapping booking', function () use ($baseOffset) {
     $bs = new BookingService();
     $mon = date('Y-m-d', strtotime('monday', strtotime('+' . ($baseOffset + 5) . ' days')));
     $r1 = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 1,
-        'start_datetime' => "$mon 10:00:00", 'end_datetime' => "$mon 12:00:00",
+        'user_id' => 9, 'resource_id' => 1,
+        'start_datetime' => "$mon 09:30:00", 'end_datetime' => "$mon 11:30:00",
         'purpose' => 'Conflict setup',
     ]);
     if (!$r1['success']) {
         return 'Setup failed: ' . ($r1['message'] ?? '');
     }
     $r2 = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 1,
-        'start_datetime' => "$mon 10:00:00", 'end_datetime' => "$mon 12:00:00",
+        'user_id' => 9, 'resource_id' => 1,
+        'start_datetime' => "$mon 09:30:00", 'end_datetime' => "$mon 11:30:00",
         'purpose' => 'Conflict test',
     ]);
     return $r2['success'] === false && str_contains($r2['message'], 'already booked');
@@ -105,7 +105,7 @@ test('Student blocked booking maintenance resource', function () {
     $bs = new BookingService();
     $date = date('Y-m-d', strtotime('+3 days'));
     $r = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 4, // LAB-202 maintenance status
+        'user_id' => 9, 'resource_id' => 7, // LAB-D101 is maintenance in seed_isvnu.sql
         'start_datetime' => "$date 09:00:00", 'end_datetime' => "$date 11:00:00",
         'purpose' => 'Lab test',
     ]);
@@ -115,13 +115,13 @@ test('Student blocked booking maintenance resource', function () {
 // 8. Peak hour limit
 test('Student blocked after 2 peak-hour bookings per week', function () use ($baseOffset) {
     $bs = new BookingService();
-    $userId = 6;
+    $userId = 9;
     $base = strtotime('+' . ($baseOffset + 300) . ' days');
     $mon = date('Y-m-d', strtotime('monday', $base));
     $tue = date('Y-m-d', strtotime('tuesday', strtotime($mon)));
     $wed = date('Y-m-d', strtotime('wednesday', strtotime($mon)));
-    $r1 = $bs->createBooking(['user_id'=>$userId,'resource_id'=>1,'start_datetime'=>"$mon 08:00:00",'end_datetime'=>"$mon 10:00:00",'purpose'=>'Peak 1']);
-    $r2 = $bs->createBooking(['user_id'=>$userId,'resource_id'=>1,'start_datetime'=>"$tue 08:00:00",'end_datetime'=>"$tue 10:00:00",'purpose'=>'Peak 2']);
+    $r1 = $bs->createBooking(['user_id'=>$userId,'resource_id'=>1,'start_datetime'=>"$mon 07:30:00",'end_datetime'=>"$mon 09:30:00",'purpose'=>'Peak 1']);
+    $r2 = $bs->createBooking(['user_id'=>$userId,'resource_id'=>1,'start_datetime'=>"$tue 07:30:00",'end_datetime'=>"$tue 09:30:00",'purpose'=>'Peak 2']);
     if (!$r1['success'] || !$r2['success']) return 'Setup failed: ' . ($r1['message']??'') . ' / ' . ($r2['message']??'');
     $r3 = $bs->createBooking(['user_id'=>$userId,'resource_id'=>1,'start_datetime'=>"$mon 13:00:00",'end_datetime'=>"$mon 15:00:00",'purpose'=>'Peak 3']);
     return $r3['success'] === false && str_contains(strtolower($r3['message']), 'peak');
@@ -132,8 +132,8 @@ test('Laboratory booking becomes pending', function () use ($baseOffset) {
     $bs = new BookingService();
     $mon = date('Y-m-d', strtotime('monday', strtotime('+' . ($baseOffset + 75) . ' days')));
     $r = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 3,
-        'start_datetime' => "$mon 08:00:00", 'end_datetime' => "$mon 10:00:00",
+        'user_id' => 9, 'resource_id' => 5,
+        'start_datetime' => "$mon 07:30:00", 'end_datetime' => "$mon 10:30:00",
         'purpose' => 'Lab session',
     ]);
     return $r['success'] === true && ($r['booking']['status'] ?? '') === 'pending';
@@ -156,7 +156,7 @@ test('Lecturer can reject a booking', function () use ($baseOffset) {
     $base = strtotime('+' . ($baseOffset + 80) . ' days');
     $wed = date('Y-m-d', strtotime('wednesday', strtotime('monday', $base)));
     $created = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 8,
+        'user_id' => 9, 'resource_id' => 18,
         'start_datetime' => "$wed 14:00:00", 'end_datetime' => "$wed 16:00:00",
         'purpose' => 'Media studio test',
     ]);
@@ -172,14 +172,14 @@ test('Student can cancel booking with reason', function () use ($far) {
     $bs = new BookingService();
     $date = $far(65);
     $created = $bs->createBooking([
-        'user_id' => 2, 'resource_id' => 2,
+        'user_id' => 9, 'resource_id' => 2,
         'start_datetime' => "$date 14:00:00", 'end_datetime' => "$date 16:00:00",
         'purpose' => 'Cancel test',
     ]);
     if (!$created['success']) return 'Could not create booking: ' . ($created['message']??'');
     $id = (int) $created['booking']['id'];
     $cs = new CancellationService();
-    $r = $cs->cancel($id, 2, 'Schedule changed', false);
+    $r = $cs->cancel($id, 9, 'Schedule changed', false);
     return $r['success'] === true;
 });
 
