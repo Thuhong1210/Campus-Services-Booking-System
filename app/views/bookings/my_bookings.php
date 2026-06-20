@@ -9,6 +9,79 @@
   </a>
 </div>
 
+<!-- ─── Filter Form ────────────────────────────────────────── -->
+<div class="card mb-4 border-0 shadow-sm" style="border-radius:12px">
+  <div class="card-body p-3">
+    <form method="GET" action="index.php" class="row g-3 align-items-end">
+      <input type="hidden" name="page" value="bookings">
+      <input type="hidden" name="action" value="myBookings">
+
+      <!-- Search Input -->
+      <div class="col-12 col-md-3">
+        <label class="form-label small fw-semibold text-muted">Search Keyword</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" name="search" class="form-control border-start-0"
+                 placeholder="Ref, purpose, resource..." 
+                 value="<?= e($filters['search'] ?? '') ?>">
+        </div>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold text-muted">Status</label>
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <?php foreach (['pending', 'approved', 'rejected', 'cancelled', 'completed', 'expired'] as $s): ?>
+            <option value="<?= $s ?>" <?= ($filters['status'] ?? '') === $s ? 'selected' : '' ?>>
+              <?= ucfirst($s) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold text-muted">Category</label>
+        <select name="category_id" class="form-select">
+          <option value="">All Categories</option>
+          <?php foreach ($categories as $cat): ?>
+            <option value="<?= $cat['id'] ?>" <?= (string)($filters['category_id'] ?? '') === (string)$cat['id'] ? 'selected' : '' ?>>
+              <?= e($cat['category_name']) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <!-- Date From Filter -->
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold text-muted">From Date</label>
+        <input type="date" name="date_from" class="form-control" 
+               value="<?= e($filters['date_from'] ?? '') ?>">
+      </div>
+
+      <!-- Date To Filter -->
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold text-muted">To Date</label>
+        <input type="date" name="date_to" class="form-control" 
+               value="<?= e($filters['date_to'] ?? '') ?>">
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="col-12 col-md-1 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100" title="Apply filters">
+          <i class="bi bi-funnel-fill"></i>
+        </button>
+        <a href="index.php?page=bookings&action=myBookings" class="btn btn-outline-secondary w-100" title="Reset filters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ─── Bookings Table ────────────────────────────────────────── -->
 <div class="card mb-3">
   <div class="table-responsive">

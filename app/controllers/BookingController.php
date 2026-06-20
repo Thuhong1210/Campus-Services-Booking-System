@@ -277,6 +277,9 @@ class BookingController extends Controller
         $filters = [
             'status' => $this->get()['status'] ?? '',
             'search' => trim((string) ($this->get()['search'] ?? '')),
+            'category_id' => $this->get()['category_id'] ?? '',
+            'date_from' => $this->get()['date_from'] ?? '',
+            'date_to' => $this->get()['date_to'] ?? '',
         ];
 
         $userId = (int) Auth::id();
@@ -287,12 +290,14 @@ class BookingController extends Controller
         $pagination = paginate($total, $page, $perPage, 'index.php?page=bookings/my');
 
         $bookings = $this->bookingRepo->findByUser($userId, $filters, $perPage, $pagination['offset']);
+        $categories = $this->categoryRepo->findAll(['status' => 'active']);
 
         $this->view('bookings/my_bookings', [
             'title' => 'My Bookings',
             'bookings' => $bookings,
             'filters' => $filters,
             'pagination' => $pagination,
+            'categories' => $categories,
         ]);
     }
 

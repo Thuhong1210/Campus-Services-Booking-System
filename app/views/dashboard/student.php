@@ -84,12 +84,73 @@ $firstName = explode(' ', $user['full_name'] ?? 'Student')[0];
   </div>
 </div>
 
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100" style="border-radius:14px">
+      <div class="card-header bg-white border-bottom py-3">
+        <span class="fw-semibold"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>My Booking Statuses</span>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 250px; position: relative;">
+        <div style="width: 100%; height: 230px;">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100" style="border-radius:14px">
+      <div class="card-header bg-white border-bottom py-3">
+        <span class="fw-semibold"><i class="bi bi-bar-chart-fill me-2 text-success"></i>Bookings by Category</span>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 250px; position: relative;">
+        <div style="width: 100%; height: 230px;">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Main Content -->
 <div class="row g-4">
 
-  <!-- Upcoming Bookings -->
+  <!-- Upcoming Bookings & Recommendations -->
   <div class="col-lg-7">
-    <div class="card h-100" style="border-radius:14px">
+    
+    <!-- Recommended Resources -->
+    <div class="card mb-4" style="border-radius:14px">
+      <div class="card-header bg-white border-bottom py-3">
+        <span class="fw-semibold"><i class="bi bi-hand-thumbs-up me-2 text-warning"></i>Recommended Resources</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <?php foreach ($recommendedResources as $res): ?>
+          <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light shadow-sm" style="border-radius:10px">
+              <div class="card-body p-3 d-flex flex-column">
+                <span class="badge bg-white text-primary border align-self-start mb-2" style="font-size:10px">
+                  <?= e($res['category_name']) ?>
+                </span>
+                <h6 class="fw-bold mb-1" style="font-size:13px; min-height: 38px;"><?= e($res['resource_name']) ?></h6>
+                <p class="text-muted mb-3 small flex-grow-1" style="font-size:11px">
+                  <i class="bi bi-geo-alt me-1"></i><?= e($res['location']) ?><br>
+                  <i class="bi bi-people me-1"></i>Capacity: <?= e($res['capacity']) ?>
+                </p>
+                <a href="<?= url('index.php?page=bookings&action=create&resource_id='.$res['id']) ?>" 
+                   class="btn btn-primary btn-sm w-100 fw-semibold text-center" style="font-size:11px">
+                  <i class="bi bi-calendar-plus me-1"></i>Quick Book
+                </a>
+              </div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Bookings -->
+    <div class="card" style="border-radius:14px">
       <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
         <span class="fw-semibold"><i class="bi bi-calendar-check me-2 text-primary"></i>My Upcoming Bookings</span>
         <a href="<?= url('index.php?page=bookings&action=myBookings') ?>" class="btn btn-outline-primary btn-sm">View All</a>
@@ -133,9 +194,61 @@ $firstName = explode(' ', $user['full_name'] ?? 'Student')[0];
     </div>
   </div>
 
-  <!-- Notifications -->
+  <!-- Notifications & Limits -->
   <div class="col-lg-5">
-    <div class="card h-100" style="border-radius:14px">
+    
+    <!-- Weekly Quota Tracker -->
+    <div class="card mb-4" style="border-radius:14px">
+      <div class="card-header bg-white border-bottom d-flex align-items-center py-3">
+        <span class="fw-semibold"><i class="bi bi-pie-chart me-2 text-info"></i>Weekly Quota Tracker</span>
+      </div>
+      <div class="card-body">
+        <!-- Peak Hours slots limit -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="small fw-medium text-muted">Weekly Peak-Hour Bookings</span>
+            <span class="small fw-semibold"><?= (int)$peakUsed ?> / <?= (int)$peakLimit ?> slots</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <?php 
+              $peakBarClass = 'bg-primary';
+              if ($peakPercentage >= 90) $peakBarClass = 'bg-danger';
+              elseif ($peakPercentage >= 70) $peakBarClass = 'bg-warning';
+            ?>
+            <div class="progress-bar <?= $peakBarClass ?>" role="progressbar" 
+                 style="width: <?= $peakPercentage ?>%" 
+                 aria-valuenow="<?= $peakUsed ?>" 
+                 aria-valuemin="0" 
+                 aria-valuemax="<?= $peakLimit ?>"></div>
+          </div>
+        </div>
+        
+        <!-- Category Hours Limits -->
+        <?php foreach ($quotaUsage as $quota): 
+            if ($quota['limit_hours'] <= 0) continue;
+            $barClass = 'bg-success';
+            if ($quota['percentage'] >= 90) $barClass = 'bg-danger';
+            elseif ($quota['percentage'] >= 70) $barClass = 'bg-warning';
+        ?>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="small fw-medium text-muted"><?= e($quota['category_name']) ?></span>
+            <span class="small fw-semibold"><?= round($quota['used_hours'], 1) ?> / <?= round($quota['limit_hours'], 1) ?> hrs</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar <?= $barClass ?>" role="progressbar" 
+                 style="width: <?= $quota['percentage'] ?>%" 
+                 aria-valuenow="<?= $quota['used_hours'] ?>" 
+                 aria-valuemin="0" 
+                 aria-valuemax="<?= $quota['limit_hours'] ?>"></div>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card" style="border-radius:14px">
       <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
         <span class="fw-semibold"><i class="bi bi-bell me-2 text-danger"></i>Notifications</span>
         <a href="<?= url('index.php?page=notifications') ?>" class="btn btn-outline-primary btn-sm">View All</a>
@@ -205,3 +318,109 @@ $firstName = explode(' ', $user['full_name'] ?? 'Student')[0];
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Status Chart
+    const statusData = <?= json_encode($chartData['bookings_by_status'] ?? []) ?>;
+    const statusLabels = statusData.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1));
+    const statusCounts = statusData.map(item => parseInt(item.count));
+    
+    // Status colors mapping
+    const statusColors = {
+        'pending': '#f59e0b',
+        'approved': '#10b981',
+        'rejected': '#ef4444',
+        'cancelled': '#6b7280',
+        'completed': '#3b82f6',
+        'expired': '#9ca3af'
+    };
+    
+    const bgColors = statusData.map(item => statusColors[item.status.toLowerCase()] || '#cbd5e1');
+
+    if (statusCounts.length > 0) {
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusCounts,
+                    backgroundColor: bgColors,
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: { family: 'Inter', size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        document.getElementById('statusChart').parentElement.innerHTML = `
+            <div class="text-muted text-center py-4">
+                <i class="bi bi-pie-chart d-block fs-3 mb-2 opacity-50"></i>
+                No bookings data for status chart
+            </div>
+        `;
+    }
+
+    // 2. Category Chart
+    const catData = <?= json_encode($chartData['bookings_by_category'] ?? []) ?>;
+    const catLabels = catData.map(item => item.category_name);
+    const catCounts = catData.map(item => parseInt(item.count));
+
+    if (catCounts.length > 0) {
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    label: 'Bookings',
+                    data: catCounts,
+                    backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            font: { family: 'Inter', size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { family: 'Inter', size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        document.getElementById('categoryChart').parentElement.innerHTML = `
+            <div class="text-muted text-center py-4">
+                <i class="bi bi-bar-chart d-block fs-3 mb-2 opacity-50"></i>
+                No bookings data for category chart
+            </div>
+        `;
+    }
+});
+</script>

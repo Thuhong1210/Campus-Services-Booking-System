@@ -78,12 +78,46 @@ class DashboardController extends Controller
         $notifications = $this->notificationRepo->findByUser($userId, [], 5, 0);
         $unreadCount = $this->notificationRepo->countUnread($userId);
 
+        // Fetch categories to calculate weekly quota usage
+        $categoryRepo = new ResourceCategoryRepository();
+        $categories = $categoryRepo->findAll(['status' => 'active']);
+        
+        $quotaUsage = [];
+        foreach ($categories as $cat) {
+            $catId = (int)$cat['id'];
+            $weeklyHoursLimit = (float)$cat['max_booking_hours_per_week'];
+            $weeklyHoursUsed = $this->bookingRepo->sumWeeklyHours($userId, $catId);
+            $quotaUsage[] = [
+                'category_name' => $cat['category_name'],
+                'limit_hours' => $weeklyHoursLimit,
+                'used_hours' => $weeklyHoursUsed,
+                'percentage' => $weeklyHoursLimit > 0 ? min(100, (int)round(($weeklyHoursUsed / $weeklyHoursLimit) * 100)) : 0
+            ];
+        }
+
+        // Calculate peak hour slots usage
+        $peakLimit = 2; // Default limit
+        $peakUsed = $this->bookingRepo->countPeakBookingsThisWeek($userId);
+        $peakPercentage = min(100, (int)round(($peakUsed / $peakLimit) * 100));
+
+        // Fetch recommended resources for quick booking
+        $recommendedResources = $this->bookingRepo->getRecommendedResources($userId, 3);
+
+        // Fetch student booking stats for visualization charts
+        $chartData = $this->bookingRepo->getStudentChartData($userId);
+
         $this->view('dashboard/student', [
             'title' => 'Student Dashboard',
             'stats' => $stats,
             'upcomingBookings' => $upcomingBookings,
             'notifications' => $notifications,
             'unreadCount' => $unreadCount,
+            'quotaUsage' => $quotaUsage,
+            'peakLimit' => $peakLimit,
+            'peakUsed' => $peakUsed,
+            'peakPercentage' => $peakPercentage,
+            'recommendedResources' => $recommendedResources,
+            'chartData' => $chartData,
         ]);
     }
 
