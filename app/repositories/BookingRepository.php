@@ -40,7 +40,7 @@ class BookingRepository
     {
         $stmt = $this->db->prepare(
             'SELECT b.*, u.full_name AS user_name, u.email AS user_email,
-                    r.resource_name, r.resource_code, r.category_id, rc.category_name
+                    r.resource_name, r.resource_code, r.location, r.capacity, r.category_id, rc.category_name
              FROM bookings b
              JOIN users u ON u.id = b.user_id
              JOIN resources r ON r.id = b.resource_id
@@ -56,8 +56,8 @@ class BookingRepository
         $stmt = $this->db->prepare(
             'INSERT INTO bookings
             (booking_reference, user_id, resource_id, start_datetime, end_datetime,
-             purpose, additional_notes, status, requires_approval)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             purpose, additional_notes, status, requires_approval, checked_in, check_in_time, is_no_show, qr_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $data['booking_reference'],
@@ -69,6 +69,10 @@ class BookingRepository
             $data['additional_notes'] ?? null,
             $data['status'] ?? 'pending',
             (int) ($data['requires_approval'] ?? 0),
+            (int) ($data['checked_in'] ?? 0),
+            $data['check_in_time'] ?? null,
+            (int) ($data['is_no_show'] ?? 0),
+            $data['qr_token'] ?? null,
         ]);
         return (int) $this->db->lastInsertId();
     }
@@ -78,6 +82,7 @@ class BookingRepository
         $fields = [
             'resource_id', 'start_datetime', 'end_datetime', 'purpose',
             'additional_notes', 'status', 'requires_approval',
+            'checked_in', 'check_in_time', 'is_no_show', 'qr_token'
         ];
         $sets = [];
         $params = [];
@@ -369,6 +374,33 @@ class BookingRepository
             $params[] = $search;
         }
         return $params;
+    }
+
+    public function findByQrToken(string $token): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT b.*, u.full_name AS user_name, u.email AS user_email,
+                    r.resource_name, r.resource_code, r.location, r.capacity, r.category_id, rc.category_name
+             FROM bookings b
+             JOIN users u ON u.id = b.user_id
+             JOIN resources r ON r.id = b.resource_id
+             JOIN resource_categories rc ON rc.id = r.category_id
+             WHERE b.qr_token = ? LIMIT 1'
+        );
+        $stmt->execute([$token]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function findExpiredApproved(string $nowMinus15): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM bookings 
+             WHERE status = "approved" 
+             AND checked_in = 0 
+             AND start_datetime < ?'
+        );
+        $stmt->execute([$nowMinus15]);
+        return $stmt->fetchAll();
     }
 
 }

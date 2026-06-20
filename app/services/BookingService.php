@@ -58,7 +58,12 @@ class BookingService
             $data['end_datetime']
         );
         if (!empty($conflicts)) {
-            return ['success' => false, 'message' => 'This resource is already booked during the selected time period.'];
+            $recommendations = $this->findAlternativeRecommendations((int) $data['resource_id'], $data['start_datetime'], $data['end_datetime']);
+            return [
+                'success' => false,
+                'message' => 'This resource is already booked during the selected time period.',
+                'recommendations' => $recommendations
+            ];
         }
 
         $maintenance = $this->maintenanceRepo->findActiveForResource(
@@ -96,6 +101,7 @@ class BookingService
         }
 
         $reference = $this->bookingRepo->generateReference();
+        $qrToken = bin2hex(random_bytes(16));
 
         $bookingId = $this->bookingRepo->create([
             'booking_reference' => $reference,
@@ -107,6 +113,7 @@ class BookingService
             'additional_notes' => $data['additional_notes'] ?? null,
             'status' => $status,
             'requires_approval' => $requiresApproval ? 1 : 0,
+            'qr_token' => $qrToken,
         ]);
 
         $booking = $this->bookingRepo->findById($bookingId);
@@ -311,5 +318,203 @@ class BookingService
         }
 
         return ['success' => true, 'available' => true, 'message' => 'Time slot is available.'];
+    }
+
+    public function findAlternativeRecommendations(int $resourceId, string $startDatetime, string $endDatetime): array
+    {
+        $resource = $this->resourceRepo->findById($resourceId);
+        if (!$resource) {
+            return ['alternative_slots' => [], 'alternative_resources' => []];
+        }
+
+        $categoryId = (int) $resource['category_id'];
+        $capacity = (int) $resource['capacity'];
+
+        $alternativeSlots = [];
+        $currentTry = strtotime($startDatetime);
+        $duration = strtotime($endDatetime) - strtotime($startDatetime);
+        
+        for ($i = 1; $i <= 24; $i++) {
+            $tryStart = $currentTry + ($i * 7200); // 2 hour steps
+            $tryEnd = $tryStart + $duration;
+            
+            $startStr = date('Y-m-d H:i:s', $tryStart);
+            $endStr = date('Y-m-d H:i:s', $tryEnd);
+            
+            $dayOfWeek = (int) date('w', $tryStart);
+            $daySlots = $this->timeSlotRepo->findByResource($resourceId);
+            $inActiveSlot = empty($daySlots);
+            foreach ($daySlots as $ts) {
+                if ((int)$ts['day_of_week'] === $dayOfWeek && (int)$ts['is_active'] === 1) {
+                    $tsStart = strtotime(date('Y-m-d ', $tryStart) . $ts['start_time']);
+                    $tsEnd = strtotime(date('Y-m-d ', $tryStart) . $ts['end_time']);
+                    if ($tryStart >= $tsStart && $tryEnd <= $tsEnd) {
+                        $inActiveSlot = true;
+                        break;
+                    }
+                }
+            }
+            if (!$inActiveSlot) {
+                continue;
+            }
+
+            $conflicts = $this->bookingRepo->findConflicts($resourceId, $startStr, $endStr);
+            if (empty($conflicts)) {
+                $alternativeSlots[] = [
+                    'booking_date' => date('Y-m-d', $tryStart),
+                    'start_time' => date('H:i', $tryStart),
+                    'end_time' => date('H:i', $tryEnd)
+                ];
+                if (count($alternativeSlots) >= 3) {
+                    break;
+                }
+            }
+        }
+
+        $alternativeResources = [];
+        $sameCatResources = $this->resourceRepo->findAll(['category_id' => $categoryId], 100, 0);
+        foreach ($sameCatResources as $otherRes) {
+            if ((int) $otherRes['id'] === $resourceId) {
+                continue;
+            }
+            if ($otherRes['status'] !== 'available') {
+                continue;
+            }
+            if ((int) $otherRes['capacity'] < $capacity) {
+                continue;
+            }
+
+            $conflicts = $this->bookingRepo->findConflicts((int) $otherRes['id'], $startDatetime, $endDatetime);
+            if (empty($conflicts)) {
+                $alternativeResources[] = [
+                    'id' => $otherRes['id'],
+                    'resource_name' => $otherRes['resource_name'],
+                    'resource_code' => $otherRes['resource_code'],
+                    'location' => $otherRes['location'] ?? ''
+                ];
+                if (count($alternativeResources) >= 3) {
+                    break;
+                }
+            }
+        }
+
+        return [
+            'alternative_slots' => $alternativeSlots,
+            'alternative_resources' => $alternativeResources
+        ];
+    }
+
+    public function checkIn(string $token, int $actorId, bool $isAdminOrStaff): array
+    {
+        $booking = $this->bookingRepo->findByQrToken($token);
+        if (!$booking) {
+            return ['success' => false, 'message' => 'Invalid QR token.'];
+        }
+
+        if ($booking['user_id'] !== $actorId && !$isAdminOrStaff) {
+            return ['success' => false, 'message' => 'Unauthorized to check in this booking.'];
+        }
+
+        if ($booking['status'] !== 'approved') {
+            return ['success' => false, 'message' => 'Only approved bookings can be checked in. Current status: ' . $booking['status']];
+        }
+
+        if ((int) $booking['checked_in'] === 1) {
+            return ['success' => false, 'message' => 'This booking is already checked in.'];
+        }
+
+        $start = strtotime($booking['start_datetime']);
+        $end = strtotime($booking['end_datetime']);
+        $now = time();
+
+        if ($now < $start - 900) { // 15 mins early max
+            return ['success' => false, 'message' => 'Check-in is only allowed up to 15 minutes before the start time.'];
+        }
+        if ($now > $end) {
+            return ['success' => false, 'message' => 'This booking period has already ended. Check-in is expired.'];
+        }
+
+        $this->bookingRepo->update((int) $booking['id'], [
+            'checked_in' => 1,
+            'check_in_time' => date('Y-m-d H:i:s')
+        ]);
+
+        $this->auditLog->log('check_in', 'bookings', (int) $booking['id'], null, [
+            'reference' => $booking['booking_reference'],
+            'checked_in' => 1
+        ]);
+
+        return ['success' => true, 'message' => 'Checked in successfully! Enjoy your resource.', 'booking' => $booking];
+    }
+
+    public function checkOut(string $token, int $actorId, bool $isAdminOrStaff): array
+    {
+        $booking = $this->bookingRepo->findByQrToken($token);
+        if (!$booking) {
+            return ['success' => false, 'message' => 'Invalid QR token.'];
+        }
+
+        if ($booking['user_id'] !== $actorId && !$isAdminOrStaff) {
+            return ['success' => false, 'message' => 'Unauthorized to check out this booking.'];
+        }
+
+        if ((int) $booking['checked_in'] !== 1) {
+            return ['success' => false, 'message' => 'This booking has not been checked in yet.'];
+        }
+
+        if ($booking['status'] === 'completed') {
+            return ['success' => false, 'message' => 'This booking is already completed.'];
+        }
+
+        $this->bookingRepo->update((int) $booking['id'], [
+            'status' => 'completed'
+        ]);
+
+        $this->auditLog->log('check_out', 'bookings', (int) $booking['id'], null, [
+            'reference' => $booking['booking_reference'],
+            'status' => 'completed'
+        ]);
+
+        return ['success' => true, 'message' => 'Checked out successfully. Thank you!', 'booking' => $booking];
+    }
+
+    public function autoReleaseNoShows(): int
+    {
+        $cutoff = date('Y-m-d H:i:s', time() - 900); // 15 minutes ago
+        $expired = $this->bookingRepo->findExpiredApproved($cutoff);
+        
+        $releasedCount = 0;
+        foreach ($expired as $b) {
+            $this->bookingRepo->update((int) $b['id'], [
+                'status' => 'cancelled',
+                'is_no_show' => 1
+            ]);
+
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare(
+                'INSERT INTO cancellations (booking_id, cancelled_by, reason, cancelled_at) 
+                 VALUES (?, ?, ?, NOW())'
+            );
+            $stmt->execute([
+                $b['id'],
+                $b['user_id'],
+                'Auto-Released: No-show for 15 minutes.'
+            ]);
+
+            $this->auditLog->log('auto_release_no_show', 'bookings', (int) $b['id'], null, [
+                'reference' => $b['booking_reference'],
+                'reason' => 'No-show'
+            ]);
+
+            try {
+                $msg = "Lịch đặt {$b['booking_reference']} đã bị hệ thống tự động hủy do bạn không điểm danh nhận phòng đúng hạn (quá 15 phút).";
+                $this->notificationService->notify((int) $b['user_id'], 'Tự động giải phóng phòng (No-show)', $msg, 'system', (int) $b['id']);
+            } catch (Throwable $e) {
+                // ignore
+            }
+
+            $releasedCount++;
+        }
+        return $releasedCount;
     }
 }
