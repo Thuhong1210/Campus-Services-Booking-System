@@ -102,6 +102,8 @@ class DashboardController extends Controller
         $pendingApprovals = $this->approvalRepo->findPending(5, 0);
         $recentHistory = $this->approvalRepo->findHistory(['approver_id' => $userId], 5, 0);
         $notifications = $this->notificationRepo->findByUser($userId, [], 5, 0);
+        $unreadCount = $this->notificationRepo->countUnread($userId);
+        $upcomingBookings = $this->bookingRepo->findUpcoming($userId, 5);
 
         $this->view('dashboard/lecturer', [
             'title' => 'Lecturer Dashboard',
@@ -109,6 +111,8 @@ class DashboardController extends Controller
             'pendingApprovals' => $pendingApprovals,
             'recentHistory' => $recentHistory,
             'notifications' => $notifications,
+            'unreadCount' => $unreadCount,
+            'upcomingBookings' => $upcomingBookings,
         ]);
     }
 

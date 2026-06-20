@@ -44,6 +44,9 @@ class PolicyService
         $durationHours = ($end - $start) / 3600;
 
         $maxDuration = (float) ($policy['max_duration_hours'] ?? $category['max_booking_hours_per_day'] ?? 4);
+        if (in_array('Lecturer', $userRoles, true)) {
+            $maxDuration *= 2; // Double duration for lecturers
+        }
         if ($durationHours > $maxDuration) {
             $errors[] = sprintf('Booking duration exceeds maximum allowed (%.1f hours).', $maxDuration);
         }
@@ -52,17 +55,26 @@ class PolicyService
         $bookingDate = date('Y-m-d', $start);
         $dailyHours = $this->bookingRepo->sumDailyHours((int) $data['user_id'], $categoryId, $bookingDate, $excludeId);
         $maxDaily = (float) ($category['max_booking_hours_per_day'] ?? 4);
+        if (in_array('Lecturer', $userRoles, true)) {
+            $maxDaily *= 2; // Double daily hours for lecturers
+        }
         if ($dailyHours + $durationHours > $maxDaily) {
             $errors[] = sprintf('Daily booking limit exceeded (max %.1f hours).', $maxDaily);
         }
 
         $weeklyHours = $this->bookingRepo->sumWeeklyHours((int) $data['user_id'], $categoryId, $excludeId);
         $maxWeekly = (float) ($category['max_booking_hours_per_week'] ?? 10);
+        if (in_array('Lecturer', $userRoles, true)) {
+            $maxWeekly *= 2; // Double weekly hours for lecturers
+        }
         if ($weeklyHours + $durationHours > $maxWeekly) {
             $errors[] = sprintf('Weekly booking hours limit exceeded (max %.1f hours).', $maxWeekly);
         }
 
         $weeklyQuota = (int) ($policy['weekly_quota'] ?? 5);
+        if (in_array('Lecturer', $userRoles, true)) {
+            $weeklyQuota *= 2; // Double quota for lecturers
+        }
         $weeklyCount = $this->bookingRepo->countWeeklyBookings((int) $data['user_id'], $categoryId, $excludeId);
         if ($weeklyCount >= $weeklyQuota) {
             $errors[] = sprintf('Weekly booking quota reached (max %d bookings).', $weeklyQuota);
