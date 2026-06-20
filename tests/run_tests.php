@@ -6,6 +6,36 @@
  */
 require dirname(__DIR__) . '/app/config/config.php';
 
+// Reset database state before running tests to ensure complete idempotency
+try {
+    $db = Database::getInstance()->getConnection();
+    $baseDir = dirname(__DIR__);
+    $files = [
+        $baseDir . '/database/campus_services_booking.sql',
+        $baseDir . '/database/seed_isvnu.sql',
+        $baseDir . '/database/seed_isvnu_part2.sql',
+    ];
+    foreach ($files as $file) {
+        if (!file_exists($file)) {
+            throw new Exception("SQL seed file not found: $file");
+        }
+        $sql = file_get_contents($file);
+        // Remove SQL comments to avoid parsing issues
+        $sql = preg_replace('/^[ \t]*--.*/m', '', $sql);
+        // Split statements by semicolon + line break
+        $statements = preg_split('/;[ \t]*[\r\n]+/', $sql);
+        foreach ($statements as $query) {
+            $query = trim($query);
+            if ($query !== '') {
+                $db->exec($query);
+            }
+        }
+    }
+} catch (Throwable $e) {
+    echo "CRITICAL ERROR: Failed to reset and seed the test database: " . $e->getMessage() . "\n";
+    exit(1);
+}
+
 $passed = 0;
 $failed = 0;
 
@@ -204,6 +234,67 @@ test('Unauthorized role check works', function () {
     $blocked = !Auth::hasAnyRole(['Admin']);
     Auth::logout();
     return $blocked === true;
+});
+
+// 16. SettingRepository CRUD
+test('SettingRepository can read and write settings', function () {
+    $repo = new SettingRepository();
+    $orig = $repo->getValue('system_name');
+    $repo->update('system_name', 'Test System Unique Name');
+    $newVal = $repo->getValue('system_name');
+    $repo->update('system_name', $orig);
+    return $newVal === 'Test System Unique Name';
+});
+
+// 17. Student blocked from booking during maintenance mode
+test('Student booking blocked when maintenance mode is active', function () {
+    $repo = new SettingRepository();
+    $bs = new BookingService();
+    
+    $repo->update('maintenance_mode', '1');
+    setting('maintenance_mode', null, true); // force reload cache
+    
+    $date = date('Y-m-d', strtotime('+40 days'));
+    $r = $bs->createBooking([
+        'user_id' => 9, // Student
+        'resource_id' => 2,
+        'start_datetime' => "$date 10:00:00",
+        'end_datetime' => "$date 12:00:00",
+        'purpose' => 'Maintenance test',
+    ]);
+    
+    $repo->update('maintenance_mode', '0');
+    setting('maintenance_mode', null, true); // force reload cache
+    
+    return $r['success'] === false && str_contains($r['message'], 'maintenance');
+});
+
+// 18. Admin allowed to book during maintenance mode
+test('Admin booking allowed when maintenance mode is active', function () {
+    $repo = new SettingRepository();
+    $bs = new BookingService();
+    
+    $repo->update('maintenance_mode', '1');
+    setting('maintenance_mode', null, true); // force reload cache
+    
+    $date = date('Y-m-d', strtotime('+42 days'));
+    $r = $bs->createBooking([
+        'user_id' => 1, // Admin (Nguyen Thi Huong Giang)
+        'resource_id' => 2,
+        'start_datetime' => "$date 10:00:00",
+        'end_datetime' => "$date 12:00:00",
+        'purpose' => 'Admin booking under maintenance',
+    ]);
+    
+    $repo->update('maintenance_mode', '0');
+    setting('maintenance_mode', null, true); // force reload cache
+    
+    if ($r['success']) {
+        $db = Database::getInstance()->getConnection();
+        $db->prepare('DELETE FROM bookings WHERE id = ?')->execute([(int) $r['booking']['id']]);
+    }
+    
+    return $r['success'] === true;
 });
 
 echo "\n=== Results: $passed passed, $failed failed ===\n";
