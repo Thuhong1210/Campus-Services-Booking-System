@@ -47,12 +47,21 @@ class ReportController extends Controller
         $totalAll = max(1, (int) ($bookingStats['total'] ?? 1));
         $cancellationRate = round((($bookingStats['cancelled'] ?? 0) / $totalAll) * 100, 1);
 
+        $noShowStats = $rawCharts['no_show_stats'] ?? ['no_shows' => 0, 'total_approved_ever' => 0, 'bookings_this_month' => 0];
+        $totalApprovedEver = (int) ($noShowStats['total_approved_ever'] ?? 0);
+        $noShowRate = $totalApprovedEver > 0
+            ? round(((int)($noShowStats['no_shows'] ?? 0) / $totalApprovedEver) * 100, 1)
+            : 0;
+        $bookingsThisMonth = (int) ($noShowStats['bookings_this_month'] ?? 0);
+
         $this->view('reports/index', [
             'title' => 'Usage Reports',
             'summary' => array_merge($bookingStats, [
                 'approval_rate' => $approvalRate,
                 'cancellation_rate' => $cancellationRate,
                 'avg_utilization' => $this->averageUtilization($reportFilters),
+                'no_show_rate' => $noShowRate,
+                'bookings_this_month' => $bookingsThisMonth,
             ]),
             'reports' => $this->reportService->getAll($reportFilters, 50, 0),
             'chartData' => $this->formatChartData($rawCharts),
@@ -176,6 +185,17 @@ class ReportController extends Controller
             $statusMap[$row['status']] = (int) $row['count'];
         }
 
+        $hourLabels = [];
+        $hourData = [];
+        $hourMap = [];
+        foreach ($raw['bookings_by_hour'] ?? [] as $row) {
+            $hourMap[(int)$row['hour']] = (int)$row['count'];
+        }
+        for ($h = 7; $h <= 21; $h++) { // School operating hours: 7 AM to 9 PM
+            $hourLabels[] = sprintf('%02d:00', $h);
+            $hourData[] = $hourMap[$h] ?? 0;
+        }
+
         return [
             'resource_labels' => array_column($raw['top_resources'] ?? [], 'resource_name'),
             'resource_data' => array_column($raw['top_resources'] ?? [], 'count'),
@@ -188,6 +208,10 @@ class ReportController extends Controller
             'cancelled' => (int) ($statusMap['cancelled'] ?? 0),
             'peak' => (int) ($raw['peak_vs_off_peak']['peak'] ?? 0),
             'off_peak' => (int) ($raw['peak_vs_off_peak']['off_peak'] ?? 0),
+            'dept_labels' => array_column($raw['bookings_by_department'] ?? [], 'department_name'),
+            'dept_data' => array_map('intval', array_column($raw['bookings_by_department'] ?? [], 'count')),
+            'hour_labels' => $hourLabels,
+            'hour_data' => $hourData,
         ];
     }
 

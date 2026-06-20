@@ -155,19 +155,43 @@ class ReportRepository
             'SELECT
     SUM(CASE WHEN peak_flag = 1 THEN 1 ELSE 0 END) AS peak,
     SUM(CASE WHEN peak_flag = 0 THEN 1 ELSE 0 END) AS off_peak
- FROM (
-     SELECT b.id,
-         MAX(CASE WHEN ts.is_peak = 1 THEN 1 ELSE 0 END) AS peak_flag
-     FROM bookings b
-     LEFT JOIN time_slots ts ON ts.resource_id = b.resource_id
-         AND ts.day_of_week = DAYOFWEEK(b.start_datetime) - 1
-         AND ts.is_active = 1
-         AND ts.start_time < TIME(b.end_datetime)
-         AND ts.end_time > TIME(b.start_datetime)
-     WHERE b.status IN ("approved", "completed")
-     AND b.start_datetime >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-     GROUP BY b.id
- ) AS sub'
+  FROM (
+      SELECT b.id,
+          MAX(CASE WHEN ts.is_peak = 1 THEN 1 ELSE 0 END) AS peak_flag
+      FROM bookings b
+      LEFT JOIN time_slots ts ON ts.resource_id = b.resource_id
+          AND ts.day_of_week = DAYOFWEEK(b.start_datetime) - 1
+          AND ts.is_active = 1
+          AND ts.start_time < TIME(b.end_datetime)
+          AND ts.end_time > TIME(b.start_datetime)
+      WHERE b.status IN ("approved", "completed")
+      AND b.start_datetime >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      GROUP BY b.id
+  ) AS sub'
+        )->fetch();
+
+        $bookingsByDepartment = $this->db->query(
+            'SELECT COALESCE(d.department_name, "Other") AS department_name, COUNT(b.id) AS count
+             FROM bookings b
+             JOIN users u ON u.id = b.user_id
+             LEFT JOIN departments d ON d.id = u.department_id
+             GROUP BY d.id, d.department_name
+             ORDER BY count DESC'
+        )->fetchAll();
+
+        $bookingsByHour = $this->db->query(
+            'SELECT HOUR(start_datetime) AS hour, COUNT(*) AS count
+             FROM bookings
+             GROUP BY hour
+             ORDER BY hour ASC'
+        )->fetchAll();
+
+        $noShowStats = $this->db->query(
+            'SELECT 
+                 SUM(CASE WHEN is_no_show = 1 THEN 1 ELSE 0 END) AS no_shows,
+                 SUM(CASE WHEN status IN ("approved", "completed") OR is_no_show = 1 THEN 1 ELSE 0 END) AS total_approved_ever,
+                 SUM(CASE WHEN start_datetime >= DATE_FORMAT(CURDATE(), "%Y-%m-01") THEN 1 ELSE 0 END) AS bookings_this_month
+             FROM bookings'
         )->fetch();
 
         return [
@@ -176,6 +200,9 @@ class ReportRepository
             'monthly_trend' => $monthlyTrend,
             'top_resources' => $topResources,
             'peak_vs_off_peak' => $peakVsOffPeak ?: ['peak' => 0, 'off_peak' => 0],
+            'bookings_by_department' => $bookingsByDepartment,
+            'bookings_by_hour' => $bookingsByHour,
+            'no_show_stats' => $noShowStats ?: ['no_shows' => 0, 'total_approved_ever' => 0, 'bookings_this_month' => 0],
         ];
     }
 
