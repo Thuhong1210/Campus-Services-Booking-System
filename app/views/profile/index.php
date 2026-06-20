@@ -62,9 +62,10 @@ $rolesList = implode(', ', $user['roles'] ?? Auth::roles());
           <?= csrf_field() ?>
           <label class="btn btn-light w-100" style="cursor:pointer">
             <i class="bi bi-camera me-2"></i>Change Photo
-            <input type="file" name="avatar" accept="image/*" class="d-none"
+            <input type="file" name="avatar" accept="image/jpeg,image/png,image/gif,image/webp" class="d-none"
                    onchange="this.form.submit()">
           </label>
+          <div class="form-text text-center mt-1" style="font-size:11px">JPG, PNG, GIF, WEBP &bull; Max 10MB</div>
         </form>
       </div>
     </div>

@@ -297,5 +297,106 @@ test('Admin booking allowed when maintenance mode is active', function () {
     return $r['success'] === true;
 });
 
+// 19. Conflict recommendations are populated during booking overlap
+test('Conflict recommendations are populated during booking overlap', function () use ($baseOffset) {
+    $bs = new BookingService();
+    $mon = date('Y-m-d', strtotime('monday', strtotime('+' . ($baseOffset + 15) . ' days')));
+    
+    $r1 = $bs->createBooking([
+        'user_id' => 9, 'resource_id' => 1,
+        'start_datetime' => "$mon 07:30:00", 'end_datetime' => "$mon 09:30:00",
+        'purpose' => 'Setup conflict recs',
+    ]);
+    if (!$r1['success']) {
+        return 'Setup failed: ' . ($r1['message'] ?? '');
+    }
+
+    $r2 = $bs->createBooking([
+        'user_id' => 9, 'resource_id' => 1,
+        'start_datetime' => "$mon 07:30:00", 'end_datetime' => "$mon 09:30:00",
+        'purpose' => 'Trigger conflict recs',
+    ]);
+
+    $hasRecs = isset($r2['recommendations']) &&
+               !empty($r2['recommendations']['alternative_slots']) &&
+               is_array($r2['recommendations']['alternative_resources']);
+               
+    return $r2['success'] === false && $hasRecs;
+});
+
+// 20. QR Code Check-in and Check-out workflow
+test('QR Code Check-in and Check-out workflow', function () {
+    $bs = new BookingService();
+    $repo = new BookingRepository();
+    $db = Database::getInstance()->getConnection();
+    
+    $qrToken = bin2hex(random_bytes(16));
+    $ref = $repo->generateReference();
+    $id = $repo->create([
+        'booking_reference' => $ref,
+        'user_id' => 9,
+        'resource_id' => 1,
+        'start_datetime' => date('Y-m-d H:i:s', time() - 300), // started 5 mins ago
+        'end_datetime' => date('Y-m-d H:i:s', time() + 3600), // ends in 1 hour
+        'purpose' => 'Check-in test',
+        'status' => 'approved',
+        'requires_approval' => 1,
+        'qr_token' => $qrToken,
+    ]);
+
+    $resIn = $bs->checkIn($qrToken, 9, false);
+    if (!$resIn['success']) {
+        return 'Check-in failed: ' . ($resIn['message'] ?? '');
+    }
+
+    $bookingObj = $repo->findById($id);
+    if ((int)$bookingObj['checked_in'] !== 1) {
+        return 'checked_in flag not set';
+    }
+
+    $resOut = $bs->checkOut($qrToken, 9, false);
+    if (!$resOut['success']) {
+        return 'Check-out failed: ' . ($resOut['message'] ?? '');
+    }
+
+    $bookingObj = $repo->findById($id);
+    
+    $db->prepare('DELETE FROM bookings WHERE id = ?')->execute([$id]);
+    
+    return $bookingObj['status'] === 'completed';
+});
+
+// 21. Auto-release no-shows cancels booking and marks is_no_show
+test('Auto-release no-shows cancels booking and marks is_no_show', function () {
+    $bs = new BookingService();
+    $repo = new BookingRepository();
+    $db = Database::getInstance()->getConnection();
+    
+    $ref = $repo->generateReference();
+    $id = $repo->create([
+        'booking_reference' => $ref,
+        'user_id' => 9,
+        'resource_id' => 1,
+        'start_datetime' => date('Y-m-d H:i:s', time() - 1200), // 20 mins ago
+        'end_datetime' => date('Y-m-d H:i:s', time() + 3600),
+        'purpose' => 'Auto-release no-show test',
+        'status' => 'approved',
+        'requires_approval' => 1,
+        'qr_token' => bin2hex(random_bytes(16)),
+    ]);
+
+    $releasedCount = $bs->autoReleaseNoShows();
+    if ($releasedCount < 1) {
+        return 'Auto-release did not release any bookings';
+    }
+
+    $bookingObj = $repo->findById($id);
+    
+    $db->prepare('DELETE FROM cancellations WHERE booking_id = ?')->execute([$id]);
+    $db->prepare('DELETE FROM bookings WHERE id = ?')->execute([$id]);
+    
+    return $bookingObj['status'] === 'cancelled' && (int)$bookingObj['is_no_show'] === 1;
+});
+
 echo "\n=== Results: $passed passed, $failed failed ===\n";
 exit($failed > 0 ? 1 : 0);
