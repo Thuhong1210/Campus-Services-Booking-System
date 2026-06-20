@@ -83,8 +83,12 @@
           <td style="color:var(--text-muted)"><?= $u['id'] ?></td>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <div class="avatar-circle" style="width:30px;height:30px;font-size:12px">
-                <?= strtoupper(substr($u['full_name'] ?? 'U', 0, 1)) ?>
+              <div class="avatar-circle overflow-hidden p-0 d-flex align-items-center justify-content-center" style="width:30px;height:30px;font-size:12px">
+                <?php if (!empty($u['avatar'])): ?>
+                  <img src="<?= asset('avatars/' . $u['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                <?php else: ?>
+                  <?= strtoupper(substr($u['full_name'] ?? 'U', 0, 1)) ?>
+                <?php endif; ?>
               </div>
               <span class="fw-medium"><?= e($u['full_name']) ?></span>
             </div>
