@@ -22,7 +22,7 @@ class BookingPolicyRepository
             $sql .= ' AND bp.category_id = ?';
             $params[] = $filters['category_id'];
         }
-        if (isset($filters['is_active'])) {
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $sql .= ' AND bp.is_active = ?';
             $params[] = (int) $filters['is_active'];
         }

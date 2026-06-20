@@ -35,7 +35,7 @@ class NotificationRepository
                 WHERE n.user_id = ?';
         $params = [$userId];
 
-        if (isset($filters['is_read'])) {
+        if (isset($filters['is_read']) && $filters['is_read'] !== '') {
             $sql .= ' AND n.is_read = ?';
             $params[] = (int) $filters['is_read'];
         }
