@@ -371,4 +371,87 @@ class BookingRepository
         return $params;
     }
 
+    public function getStudentChartData(int $userId): array
+    {
+        $stmtStatus = $this->db->prepare(
+            'SELECT status, COUNT(*) AS count FROM bookings WHERE user_id = ? GROUP BY status ORDER BY count DESC'
+        );
+        $stmtStatus->execute([$userId]);
+        $bookingsByStatus = $stmtStatus->fetchAll();
+
+        $stmtCategory = $this->db->prepare(
+            'SELECT rc.category_name, COUNT(b.id) AS count
+             FROM bookings b
+             JOIN resources r ON r.id = b.resource_id
+             JOIN resource_categories rc ON rc.id = r.category_id
+             WHERE b.user_id = ?
+             GROUP BY rc.id, rc.category_name
+             ORDER BY count DESC'
+        );
+        $stmtCategory->execute([$userId]);
+        $bookingsByCategory = $stmtCategory->fetchAll();
+
+        $stmtTrend = $this->db->prepare(
+            'SELECT DATE_FORMAT(start_datetime, "%Y-%m") AS month, COUNT(*) AS count
+             FROM bookings
+             WHERE user_id = ?
+             AND start_datetime >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+             GROUP BY month
+             ORDER BY month ASC'
+        );
+        $stmtTrend->execute([$userId]);
+        $monthlyTrend = $stmtTrend->fetchAll();
+
+        return [
+            'bookings_by_status' => $bookingsByStatus,
+            'bookings_by_category' => $bookingsByCategory,
+            'monthly_trend' => $monthlyTrend,
+        ];
+    }
+
+    public function getRecommendedResources(int $userId, int $limit = 3): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT r.*, rc.category_name, COUNT(b.id) AS booking_count
+             FROM bookings b
+             JOIN resources r ON r.id = b.resource_id
+             JOIN resource_categories rc ON rc.id = r.category_id
+             WHERE b.user_id = ? AND r.status = "available"
+             GROUP BY r.id
+             ORDER BY booking_count DESC
+             LIMIT ?'
+        );
+        $stmt->bindValue(1, $userId, PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $recommended = $stmt->fetchAll();
+
+        if (count($recommended) < $limit) {
+            $needed = $limit - count($recommended);
+            $excludeIds = empty($recommended) ? [0] : array_column($recommended, 'id');
+            $inClause = implode(',', array_fill(0, count($excludeIds), '?'));
+
+            $fallbackStmt = $this->db->prepare(
+                "SELECT r.*, rc.category_name, COUNT(b.id) AS booking_count
+                 FROM resources r
+                 JOIN resource_categories rc ON rc.id = r.category_id
+                 LEFT JOIN bookings b ON b.resource_id = r.id AND b.status IN ('approved', 'completed')
+                 WHERE r.status = 'available' AND r.id NOT IN ($inClause)
+                 GROUP BY r.id
+                 ORDER BY booking_count DESC, r.id ASC
+                 LIMIT ?"
+            );
+
+            foreach ($excludeIds as $idx => $id) {
+                $fallbackStmt->bindValue($idx + 1, $id, PDO::PARAM_INT);
+            }
+            $fallbackStmt->bindValue(count($excludeIds) + 1, $needed, PDO::PARAM_INT);
+            $fallbackStmt->execute();
+            $fallback = $fallbackStmt->fetchAll();
+
+            $recommended = array_merge($recommended, $fallback);
+        }
+
+        return $recommended;
+    }
 }

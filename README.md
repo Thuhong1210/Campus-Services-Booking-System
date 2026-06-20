@@ -19,7 +19,7 @@ Manual booking via Excel, email, and chat causes double-bookings, poor visibilit
 
 1. **Copy project** to XAMPP htdocs (symlink already created):
    ```
-   /Applications/XAMPP/xamppfiles/htdocs/campus-services-booking/
+   /Applications/XAMPP/xamppfiles/htdocs/Campus-Services-Booking-System/
    ```
 
 2. **Start XAMPP** — Apache and MySQL
@@ -31,11 +31,11 @@ Manual booking via Excel, email, and chat causes double-bookings, poor visibilit
 
 4. **Configure** (if needed) edit `app/config/config.php`:
    - `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`
-   - `APP_URL` (default: `/campus-services-booking/public`)
+   - `APP_URL` (default: `/Campus-Services-Booking-System/public`)
 
 5. **Open browser:**
    ```
-   http://localhost/campus-services-booking/public/
+   http://localhost/Campus-Services-Booking-System/public/
    ```
 
 ## Demo Accounts
@@ -50,7 +50,7 @@ Manual booking via Excel, email, and chat causes double-bookings, poor visibilit
 ## Folder Structure
 
 ```
-campus-services-booking/
+Campus-Services-Booking-System/
 ├── public/           # Entry point (index.php, login.php, assets)
 ├── app/
 │   ├── config/       # Database & app settings
