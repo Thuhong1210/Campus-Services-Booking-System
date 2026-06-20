@@ -4,6 +4,21 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/app/config/config.php';
 
+// Language switcher interceptor
+if (isset($_GET['lang'])) {
+    $lang = $_GET['lang'] === 'vi' ? 'vi' : 'en';
+    $_SESSION['lang'] = $lang;
+
+    // Clean URI of the lang parameter and redirect
+    $uri = $_SERVER['REQUEST_URI'];
+    $uri = (string) preg_replace('/[?&]lang=[^&]*/', '', $uri);
+    if ($uri === '' || $uri === '/' || str_ends_with($uri, '?') || str_ends_with($uri, '&')) {
+        $uri = rtrim($uri, '?&') ?: 'index.php';
+    }
+    header('Location: ' . $uri);
+    exit;
+}
+
 $page = trim((string) ($_GET['page'] ?? 'dashboard'));
 $action = trim((string) ($_GET['action'] ?? 'index'));
 $method = $_SERVER['REQUEST_METHOD'];
@@ -46,7 +61,7 @@ $routes = [
     'reports' => ['ReportController', ['index' => [Middleware::class, 'admin'], 'generate' => [Middleware::class, 'admin'], 'exportCsv' => [Middleware::class, 'admin'], 'exportExcel' => [Middleware::class, 'admin'], 'exportPdf' => [Middleware::class, 'admin']]],
     'audit-logs' => ['AuditLogController', ['index' => [Middleware::class, 'admin']]],
     'profile' => ['ProfileController', ['index' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth'], 'upload-avatar' => [Middleware::class, 'auth']]],
-    'settings' => ['SettingsController', ['index' => [Middleware::class, 'admin']]],
+    'settings' => ['SettingsController', ['index' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin']]],
 ];
 
 if (!isset($routes[$page])) {
