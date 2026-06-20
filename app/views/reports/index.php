@@ -67,8 +67,18 @@
 <div class="row g-4 mb-4">
   <div class="col-lg-6"><div class="card p-3 h-100"><h6 class="fw-semibold mb-3">Most Used Resources</h6><canvas id="chartResources" height="200"></canvas></div></div>
   <div class="col-lg-6"><div class="card p-3 h-100"><h6 class="fw-semibold mb-3">Bookings by Category</h6><canvas id="chartCategory" height="200"></canvas></div></div>
-  <div class="col-lg-6"><div class="card p-3 h-100"><h6 class="fw-semibold mb-3">Approval vs Rejection vs Cancellation</h6><canvas id="chartApproval" height="200"></canvas></div></div>
-  <div class="col-lg-6"><div class="card p-3 h-100"><h6 class="fw-semibold mb-3">Peak vs Off-Peak Usage (30 days)</h6><canvas id="chartPeak" height="200"></canvas></div></div>
+  <div class="col-lg-6"><div class="card p-3 h-100">
+    <h6 class="fw-semibold mb-3">Approval vs Rejection vs Cancellation</h6>
+    <div style="position:relative;max-height:280px;display:flex;justify-content:center;">
+      <canvas id="chartApproval"></canvas>
+    </div>
+  </div></div>
+  <div class="col-lg-6"><div class="card p-3 h-100">
+    <h6 class="fw-semibold mb-3">Peak vs Off-Peak Usage (30 days)</h6>
+    <div style="position:relative;max-height:280px;display:flex;justify-content:center;">
+      <canvas id="chartPeak"></canvas>
+    </div>
+  </div></div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -121,17 +131,40 @@
 </div>
 
 <script>
-const rd = <?= json_encode($chartData ?? []) ?>;
-if (document.getElementById('chartResources')) {
-  new Chart(document.getElementById('chartResources'), { type: 'bar', data: { labels: rd.resource_labels || [], datasets: [{ label: 'Bookings', data: rd.resource_data || [], backgroundColor: '#1e3a5f' }] }, options: { plugins: { legend: { display: false } } } });
-}
-if (document.getElementById('chartCategory')) {
-  new Chart(document.getElementById('chartCategory'), { type: 'bar', data: { labels: rd.category_labels || [], datasets: [{ data: rd.category_data || [], backgroundColor: '#3C83F6' }] }, options: { plugins: { legend: { display: false } } } });
-}
-if (document.getElementById('chartApproval')) {
-  new Chart(document.getElementById('chartApproval'), { type: 'doughnut', data: { labels: ['Approved', 'Rejected', 'Cancelled'], datasets: [{ data: [rd.approved || 0, rd.rejected || 0, rd.cancelled || 0], backgroundColor: ['#21C45D', '#DC3848', '#6c757d'] }] } });
-}
-if (document.getElementById('chartPeak')) {
-  new Chart(document.getElementById('chartPeak'), { type: 'pie', data: { labels: ['Peak Hour', 'Off-Peak'], datasets: [{ data: [rd.peak || 0, rd.off_peak || 0], backgroundColor: ['#f59e0b', '#94a3b8'] }] } });
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const rd = <?= json_encode($chartData ?? []) ?>;
+
+  if (document.getElementById('chartResources')) {
+    new Chart(document.getElementById('chartResources'), {
+      type: 'bar',
+      data: { labels: rd.resource_labels || [], datasets: [{ label: 'Bookings', data: rd.resource_data || [], backgroundColor: '#1e3a5f', borderRadius: 4 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+  if (document.getElementById('chartCategory')) {
+    new Chart(document.getElementById('chartCategory'), {
+      type: 'bar',
+      data: { labels: rd.category_labels || [], datasets: [{ data: rd.category_data || [], backgroundColor: '#3C83F6', borderRadius: 4 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+  if (document.getElementById('chartApproval')) {
+    const elA = document.getElementById('chartApproval');
+    elA.style.maxHeight = '260px';
+    new Chart(elA, {
+      type: 'doughnut',
+      data: { labels: ['Approved', 'Rejected', 'Cancelled'], datasets: [{ data: [rd.approved || 0, rd.rejected || 0, rd.cancelled || 0], backgroundColor: ['#21C45D', '#DC3848', '#6c757d'] }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+  if (document.getElementById('chartPeak')) {
+    const elP = document.getElementById('chartPeak');
+    elP.style.maxHeight = '260px';
+    new Chart(elP, {
+      type: 'pie',
+      data: { labels: ['Peak Hour', 'Off-Peak'], datasets: [{ data: [rd.peak || 0, rd.off_peak || 0], backgroundColor: ['#f59e0b', '#94a3b8'] }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+});
 </script>

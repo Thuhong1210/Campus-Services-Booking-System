@@ -54,13 +54,21 @@ class DashboardController extends Controller
         $stats['total_resources'] = $this->resourceRepo->count([]);
         $stats['pending_approvals'] = $this->approvalRepo->countPending();
 
-        $chartData = $this->reportService->getDashboardChartData();
+        $rawCharts = $this->reportService->getDashboardChartData();
         $recentActivity = $this->auditLogRepo->findAll([], 10, 0);
         $upcomingBookings = $this->bookingRepo->findAll(
             ['date_from' => date('Y-m-d H:i:s')],
             10,
             0
         );
+
+        // Format raw chart data into the arrays that admin.php JavaScript expects
+        $chartData = [
+            'category_labels' => array_column($rawCharts['bookings_by_category'] ?? [], 'category_name'),
+            'category_data'   => array_map('intval', array_column($rawCharts['bookings_by_category'] ?? [], 'count')),
+            'peak_labels'     => array_column($rawCharts['monthly_trend'] ?? [], 'month'),
+            'peak_data'       => array_map('intval', array_column($rawCharts['monthly_trend'] ?? [], 'count')),
+        ];
 
         $this->view('dashboard/admin', [
             'title' => 'Admin Dashboard',

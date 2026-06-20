@@ -22,11 +22,11 @@ class TimeSlotRepository
             $sql .= ' AND ts.resource_id = ?';
             $params[] = $filters['resource_id'];
         }
-        if (isset($filters['is_active'])) {
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $sql .= ' AND ts.is_active = ?';
             $params[] = (int) $filters['is_active'];
         }
-        if (isset($filters['is_peak'])) {
+        if (isset($filters['is_peak']) && $filters['is_peak'] !== '') {
             $sql .= ' AND ts.is_peak = ?';
             $params[] = (int) $filters['is_peak'];
         }

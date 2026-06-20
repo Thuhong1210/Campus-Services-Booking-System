@@ -60,8 +60,8 @@ $cards = [
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-activity" style="color:var(--success)"></i>
-        Peak Hour Bookings
+        <i class="bi bi-graph-up" style="color:var(--success)"></i>
+        Monthly Booking Trend
       </div>
       <div class="card-body">
         <canvas id="chartPeak" height="200"></canvas>
@@ -163,7 +163,7 @@ $cards = [
 
 <!-- ─── Chart Scripts ──────────────────────────────────────────── -->
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', () => {
   const cd = <?= json_encode($chartData) ?>;
 
   const defaultFont = { family: 'Inter, system-ui, sans-serif', size: 12 };
@@ -227,5 +227,5 @@ $cards = [
       }
     });
   }
-})();
+});
 </script>
