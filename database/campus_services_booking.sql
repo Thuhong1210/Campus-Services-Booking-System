@@ -8,6 +8,7 @@ USE `campus_services_booking`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS usage_reports;
 DROP TABLE IF EXISTS notifications;
@@ -277,7 +278,26 @@ CREATE TABLE maintenance_schedules (
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
+-- ===================== SETTINGS =====================
+CREATE TABLE settings (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(100) NOT NULL UNIQUE,
+  setting_value TEXT,
+  description VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- ===================== SEED DATA =====================
+
+INSERT INTO settings (setting_key, setting_value, description) VALUES
+('system_name', 'Campus Services Booking System', 'System Name'),
+('default_timezone', 'Asia/Ho_Chi_Minh', 'Default Timezone'),
+('maintenance_mode', '0', 'Maintenance Mode (1=Active, 0=Inactive)'),
+('default_booking_limit', '2', 'Weekly Peak-Hour Booking Limit'),
+('default_cancellation_deadline', '24', 'Default Cancellation Deadline in Hours'),
+('email_notification_enabled', '1', 'Email Notifications Enabled (1=Active, 0=Inactive)'),
+('language_default', 'en', 'Default Language (en/vi)');
 
 INSERT INTO roles (role_name, description) VALUES
 ('Admin', 'System administrator with full access'),

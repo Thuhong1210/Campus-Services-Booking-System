@@ -42,6 +42,11 @@ class BookingService
 
         $userRoles = $this->userRepo->getRoles((int) $data['user_id']);
 
+        // Maintenance Mode Check
+        if (setting('maintenance_mode', '0') === '1' && !in_array('Admin', $userRoles, true)) {
+            return ['success' => false, 'message' => __('The system is currently undergoing maintenance. Booking functions are temporarily locked.')];
+        }
+
         $policyErrors = $this->policyService->validate($data, $resource, $userRoles);
         if (!empty($policyErrors)) {
             return ['success' => false, 'message' => implode(' ', $policyErrors)];
@@ -185,6 +190,11 @@ class BookingService
         $data['user_id'] = (int) $booking['user_id'];
         $data['exclude_booking_id'] = $bookingId;
         $userRoles = $this->userRepo->getRoles($data['user_id']);
+
+        // Maintenance Mode Check
+        if (setting('maintenance_mode', '0') === '1' && !$isAdmin && !in_array('Admin', $userRoles, true)) {
+            return ['success' => false, 'message' => __('The system is currently undergoing maintenance. Booking functions are temporarily locked.')];
+        }
 
         $policyErrors = $this->policyService->validate($data, $resource, $userRoles);
         if (!empty($policyErrors)) {

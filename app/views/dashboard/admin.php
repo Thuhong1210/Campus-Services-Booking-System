@@ -4,8 +4,8 @@ $chartData = $chartData ?? [];
 
 <!-- ─── Page Header ──────────────────────────────────────────── -->
 <div class="page-header mb-4">
-  <h1 class="fw-bold mb-1">Dashboard Overview</h1>
-  <p class="text-muted mb-0">Welcome back. Here's what's happening across the campus today.</p>
+  <h1 class="fw-bold mb-1"><?= e(__('Dashboard Overview')) ?></h1>
+  <p class="text-muted mb-0"><?= e(__('Welcome back. Here\'s what\'s happening across the campus today.')) ?></p>
 </div>
 
 <!-- ─── Stat Cards ───────────────────────────────────────────── -->
@@ -28,7 +28,7 @@ $cards = [
         <div class="d-flex align-items-start justify-content-between">
           <div>
             <p class="mb-1" style="font-size:12px;color:var(--text-muted);font-weight:500">
-              <?= e($card['label']) ?>
+              <?= e(__($card['label'])) ?>
             </p>
             <h3 class="fw-bold mb-0" style="font-size:1.5rem">
               <?= e((string) $card['val']) ?>
@@ -50,7 +50,7 @@ $cards = [
     <div class="card h-100">
       <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-bar-chart-fill" style="color:var(--primary)"></i>
-        Bookings by Category
+        <?= e(__('Bookings by Category')) ?>
       </div>
       <div class="card-body">
         <canvas id="chartCategory" height="200"></canvas>
@@ -61,7 +61,7 @@ $cards = [
     <div class="card h-100">
       <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-graph-up" style="color:var(--success)"></i>
-        Monthly Booking Trend
+        <?= e(__('Monthly Booking Trend')) ?>
       </div>
       <div class="card-body">
         <canvas id="chartPeak" height="200"></canvas>
@@ -78,15 +78,15 @@ $cards = [
     <div class="card">
       <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-clock-history" style="color:var(--accent)"></i>
-        Recent Activity
+        <?= e(__('Recent Activity')) ?>
       </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
           <thead>
             <tr>
-              <th>User</th>
-              <th>Action</th>
-              <th>Time</th>
+              <th><?= e(__('User')) ?></th>
+              <th><?= e(__('Action')) ?></th>
+              <th><?= e(__('Time')) ?></th>
             </tr>
           </thead>
           <tbody>
@@ -106,7 +106,7 @@ $cards = [
             <?php if (empty($recentActivity)): ?>
             <tr>
               <td colspan="3" class="text-center py-4" style="color:var(--text-muted)">
-                No recent activity.
+                <?= e(__('No recent activity.')) ?>
               </td>
             </tr>
             <?php endif; ?>
@@ -121,16 +121,16 @@ $cards = [
     <div class="card">
       <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-calendar-event" style="color:var(--primary)"></i>
-        Upcoming Bookings
+        <?= e(__('Upcoming Bookings')) ?>
       </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
           <thead>
             <tr>
-              <th>Ref</th>
-              <th>Student</th>
-              <th>Resource</th>
-              <th>Status</th>
+              <th><?= e(__('Ref')) ?></th>
+              <th><?= e(__('Student')) ?></th>
+              <th><?= e(__('Resource')) ?></th>
+              <th><?= e(__('Status')) ?></th>
             </tr>
           </thead>
           <tbody>
@@ -149,7 +149,7 @@ $cards = [
             <?php if (empty($upcomingBookings)): ?>
             <tr>
               <td colspan="4" class="text-center py-4" style="color:var(--text-muted)">
-                No upcoming bookings.
+                <?= e(__('No upcoming bookings.')) ?>
               </td>
             </tr>
             <?php endif; ?>

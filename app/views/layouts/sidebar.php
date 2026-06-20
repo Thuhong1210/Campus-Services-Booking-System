@@ -80,8 +80,10 @@ foreach ($navItems as $item) {
   <div class="sidebar-header">
     <div class="d-flex align-items-center gap-2">
       <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
-      <div>
-        <div class="brand-text lh-1">Campus Services</div>
+      <div style="overflow:hidden">
+        <div class="brand-text lh-1" style="font-size:13px;font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden" title="<?= e(setting('system_name', 'Campus Services')) ?>">
+          <?= e(setting('system_name', 'Campus Services')) ?>
+        </div>
         <div style="font-size:10px;color:var(--text-muted)">IS-VNU Booking</div>
       </div>
     </div>
@@ -102,7 +104,7 @@ foreach ($navItems as $item) {
         <li class="nav-item sidebar-group-item">
           <a class="sidebar-group-toggle text-decoration-none"
              href="#<?= $gid ?>" data-bs-toggle="collapse" aria-expanded="<?= $isOpen ?>">
-            <span class="sidebar-group-label-text"><?= e($item['group']) ?></span>
+            <span class="sidebar-group-label-text"><?= e(__($item['group'])) ?></span>
             <i class="bi bi-chevron-down sidebar-chevron"></i>
           </a>
           <ul class="nav flex-column collapse <?= $collapseClass ?>" id="<?= $gid ?>">
@@ -112,7 +114,7 @@ foreach ($navItems as $item) {
     ?>
         <li class="nav-item">
           <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
-            <i class="bi <?= e($item['icon']) ?>"></i><?= e($item['label']) ?>
+            <i class="bi <?= e($item['icon']) ?>"></i><?= e(__($item['label'])) ?>
             <?php if ($item['page'] === 'notifications' && $unreadNotifications > 0): ?>
               <span class="badge bg-danger ms-auto"><?= $unreadNotifications ?></span>
             <?php endif; ?>
@@ -126,7 +128,7 @@ foreach ($navItems as $item) {
   </ul>
   <div class="sidebar-footer">
     <a class="nav-link sidebar-link" href="<?= url('logout.php') ?>">
-      <i class="bi bi-box-arrow-right"></i>Logout
+      <i class="bi bi-box-arrow-right"></i><?= e(__('Logout')) ?>
     </a>
   </div>
 </nav>

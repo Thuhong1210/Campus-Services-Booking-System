@@ -127,3 +127,49 @@ function paginate(int $total, int $page, int $perPage, string $baseUrl): array
         'base_url' => $baseUrl,
     ];
 }
+
+/**
+ * Get setting value from database
+ */
+function setting(string $key, $default = null, bool $refresh = false)
+{
+    static $settings = null;
+    if ($settings === null || $refresh) {
+        $settings = [];
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->query('SELECT setting_key, setting_value FROM settings');
+            while ($row = $stmt->fetch()) {
+                $settings[$row['setting_key']] = $row['setting_value'];
+            }
+        } catch (Throwable $e) {
+            // database table might not exist yet or not connected
+        }
+    }
+    return $settings[$key] ?? $default;
+}
+
+function __(string $key): string
+{
+    static $dictionary = null;
+    $lang = $_SESSION['lang'] ?? null;
+    if ($lang === null) {
+        $lang = setting('language_default', 'en');
+        $_SESSION['lang'] = $lang;
+    }
+    if ($dictionary === null || $dictionary['lang'] !== $lang) {
+        $file = APP_PATH . "/lang/{$lang}.php";
+        if (file_exists($file)) {
+            $dictionary = [
+                'lang' => $lang,
+                'data' => include $file
+            ];
+        } else {
+            $dictionary = [
+                'lang' => $lang,
+                'data' => []
+            ];
+        }
+    }
+    return $dictionary['data'][$key] ?? $key;
+}

@@ -11,17 +11,17 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
 <!-- ─── Welcome Header ───────────────────────────────────────── -->
 <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
   <div>
-    <h1 class="fw-bold mb-1"><?= $greeting ?>, Prof. <?= e($firstName) ?> 👋</h1>
+    <h1 class="fw-bold mb-1"><?= e(__($greeting)) ?>, Prof. <?= e($firstName) ?> 👋</h1>
     <p class="text-muted mb-0" style="font-size:13.5px">
-      Here is an overview of your bookings, notifications, and approval queue.
+      <?= e(__('Here is an overview of your bookings, notifications, and approval queue.')) ?>
     </p>
   </div>
   <div class="d-flex gap-2">
     <a href="<?= route_url('resources', 'browse') ?>" class="btn btn-primary d-flex align-items-center gap-2">
-      <i class="bi bi-search"></i> Browse Resources
+      <i class="bi bi-search"></i> <?= e(__('Browse Resources')) ?>
     </a>
     <a href="<?= route_url('bookings', 'create') ?>" class="btn btn-light d-flex align-items-center gap-2">
-      <i class="bi bi-plus-lg"></i> Create Booking
+      <i class="bi bi-plus-lg"></i> <?= e(__('Create Booking')) ?>
     </a>
   </div>
 </div>
@@ -41,7 +41,7 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
         <div class="d-flex align-items-start justify-content-between">
           <div>
             <p class="mb-1" style="font-size:12px;color:var(--text-muted);font-weight:500">
-              <?= e($c['label']) ?>
+              <?= e(__($c['label'])) ?>
             </p>
             <h3 class="fw-bold mb-0" style="font-size:1.6rem"><?= $c['val'] ?></h3>
           </div>
@@ -60,23 +60,23 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header bg-white fw-medium d-flex align-items-center justify-content-between">
-        <div><i class="bi bi-clipboard-check text-danger me-2"></i>Pending Approval Queue</div>
-        <a href="<?= route_url('approvals') ?>" class="btn btn-sm btn-light">View All</a>
+        <div><i class="bi bi-clipboard-check text-danger me-2"></i><?= e(__('Pending Approval Queue')) ?></div>
+        <a href="<?= route_url('approvals') ?>" class="btn btn-sm btn-light"><?= e(__('View All')) ?></a>
       </div>
       <div class="table-responsive">
         <table class="table mb-0">
-          <thead><tr><th>Student</th><th>Resource</th><th>Date</th><th></th></tr></thead>
+          <thead><tr><th><?= e(__('Student')) ?></th><th><?= e(__('Resource')) ?></th><th><?= e(__('Date')) ?></th><th></th></tr></thead>
           <tbody>
           <?php foreach($pendingApprovals as $a): ?>
             <tr>
               <td><?= e($a['user_name']) ?></td>
               <td><?= e($a['resource_name']) ?></td>
               <td><?= format_datetime($a['start_datetime']) ?></td>
-              <td><a href="<?= route_url('approvals', 'show', ['id' => $a['booking_id']]) ?>" class="btn btn-sm btn-primary">Review</a></td>
+              <td><a href="<?= route_url('approvals', 'show', ['id' => $a['booking_id']]) ?>" class="btn btn-sm btn-primary"><?= e(__('Review')) ?></a></td>
             </tr>
           <?php endforeach; ?>
           <?php if(empty($pendingApprovals)): ?>
-            <tr><td colspan="4" class="text-center text-muted py-3">No pending approvals.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted py-3"><?= e(__('No pending approvals.')) ?></td></tr>
           <?php endif; ?>
           </tbody>
         </table>
@@ -90,14 +90,14 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
       <div class="card-header d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
           <i class="bi bi-calendar-week-fill" style="color:var(--primary)"></i>
-          My Upcoming Bookings
+          <?= e(__('My Upcoming Bookings')) ?>
         </div>
-        <a href="<?= route_url('bookings', 'myBookings') ?>" class="btn btn-sm btn-light">View All</a>
+        <a href="<?= route_url('bookings', 'myBookings') ?>" class="btn btn-sm btn-light"><?= e(__('View All')) ?></a>
       </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
           <thead>
-            <tr><th>Resource</th><th>Date & Time</th><th>Status</th></tr>
+            <tr><th><?= e(__('Resource')) ?></th><th><?= e(__('Date & Time')) ?></th><th><?= e(__('Status')) ?></th></tr>
           </thead>
           <tbody>
             <?php foreach ($upcomingBookings as $b): ?>
@@ -108,7 +108,7 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
             </tr>
             <?php endforeach; ?>
             <?php if (empty($upcomingBookings)): ?>
-            <tr><td colspan="3" class="text-center py-4 text-muted">No upcoming bookings.</td></tr>
+            <tr><td colspan="3" class="text-center py-4 text-muted"><?= e(__('No upcoming bookings.')) ?></td></tr>
             <?php endif; ?>
           </tbody>
         </table>
@@ -122,12 +122,12 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header bg-white fw-medium d-flex align-items-center justify-content-between">
-        <div><i class="bi bi-clock-history text-secondary me-2"></i>Recent Approval History</div>
-        <a href="<?= route_url('approvals') ?>" class="btn btn-sm btn-light">View All</a>
+        <div><i class="bi bi-clock-history text-secondary me-2"></i><?= e(__('Recent Approval History')) ?></div>
+        <a href="<?= route_url('approvals') ?>" class="btn btn-sm btn-light"><?= e(__('View All')) ?></a>
       </div>
       <div class="table-responsive">
         <table class="table mb-0">
-          <thead><tr><th>Booking Ref</th><th>Decision</th><th>Time</th></tr></thead>
+          <thead><tr><th><?= e(__('Booking Ref')) ?></th><th><?= e(__('Decision')) ?></th><th><?= e(__('Time')) ?></th></tr></thead>
           <tbody>
           <?php foreach($recentHistory as $h): ?>
             <tr>
@@ -137,7 +137,7 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
             </tr>
           <?php endforeach; ?>
           <?php if(empty($recentHistory)): ?>
-            <tr><td colspan="3" class="text-center text-muted py-3">No recent history.</td></tr>
+            <tr><td colspan="3" class="text-center text-muted py-3"><?= e(__('No recent history.')) ?></td></tr>
           <?php endif; ?>
           </tbody>
         </table>
@@ -148,8 +148,8 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-bell-fill text-warning"></i> Notifications</div>
-        <a href="<?= route_url('notifications') ?>" class="btn btn-sm btn-light">See All</a>
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-bell-fill text-warning"></i> <?= e(__('Notifications')) ?></div>
+        <a href="<?= route_url('notifications') ?>" class="btn btn-sm btn-light"><?= e(__('See All')) ?></a>
       </div>
       <div class="list-group list-group-flush">
         <?php foreach ($notifications as $n): ?>
@@ -163,7 +163,7 @@ $firstName = explode(' ', $user['full_name'] ?? 'Lecturer')[0];
         </div>
         <?php endforeach; ?>
         <?php if (empty($notifications)): ?>
-        <div class="list-group-item text-center py-4 text-muted">No notifications</div>
+        <div class="list-group-item text-center py-4 text-muted"><?= e(__('No notifications')) ?></div>
         <?php endif; ?>
       </div>
     </div>
