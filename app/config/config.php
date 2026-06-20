@@ -81,3 +81,10 @@ spl_autoload_register(function (string $class): void {
 });
 
 require_once APP_PATH . '/helpers/functions.php';
+
+try {
+    $tz = setting('default_timezone', 'Asia/Ho_Chi_Minh');
+    date_default_timezone_set($tz);
+} catch (Throwable $e) {
+    date_default_timezone_set('Asia/Ho_Chi_Minh');
+}
