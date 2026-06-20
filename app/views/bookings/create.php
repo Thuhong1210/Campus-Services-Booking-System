@@ -30,6 +30,101 @@ $isMaintenance = (setting('maintenance_mode', '0') === '1' && !Auth::isAdmin());
       </div>
     <?php endif; ?>
 
+    <?php if (!empty($recommendations)): ?>
+      <div class="rounded-3 border border-warning-subtle shadow-sm p-4 mb-4" style="background:linear-gradient(135deg,#fffbeb,#fef9ee)">
+        <div class="d-flex align-items-start gap-3 mb-4">
+          <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px">
+            <i class="bi bi-lightbulb-fill text-white fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-1 text-warning-emphasis"><?= e(__('Time Slot Conflict – Smart Recommendations')) ?></h6>
+            <p class="mb-0 text-secondary" style="font-size:13.5px">
+              <?= e(__('The selected resource is already booked. Here are the best available alternatives we found:')) ?>
+            </p>
+          </div>
+        </div>
+
+        <?php if (!empty($recommendations['alternative_slots'])): ?>
+          <div class="mb-4">
+            <div class="fw-bold small text-uppercase text-muted mb-3 d-flex align-items-center gap-2" style="font-size:11px;letter-spacing:0.06em">
+              <i class="bi bi-clock-fill text-warning"></i>
+              <?= e(__('Available Time Slots (Same Room)')) ?>
+            </div>
+            <div class="row g-2">
+              <?php foreach ($recommendations['alternative_slots'] as $i => $slot): ?>
+                <div class="col-sm-6 col-lg-4">
+                  <button type="button"
+                          class="btn w-100 text-start p-3 rounded-3 border border-warning slot-btn"
+                          style="background:white;transition:all .2s"
+                          onclick="applySlot('<?= $slot['booking_date'] ?>', '<?= $slot['start_time'] ?>', '<?= $slot['end_time'] ?>')"
+                          onmouseover="this.style.background='#fffbeb';this.style.borderColor='#f59e0b'"
+                          onmouseout="this.style.background='white';this.style.borderColor='#fde68a'">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <i class="bi bi-calendar-check text-warning"></i>
+                      <span class="fw-semibold text-dark" style="font-size:13px"><?= date('D, d/m/Y', strtotime($slot['booking_date'])) ?></span>
+                    </div>
+                    <div class="text-muted small">
+                      <i class="bi bi-clock me-1"></i><?= $slot['start_time'] ?> – <?= $slot['end_time'] ?>
+                    </div>
+                    <div class="mt-2">
+                      <span class="badge bg-warning-subtle text-warning border border-warning-subtle small">
+                        <i class="bi bi-lightning-charge-fill me-1"></i><?= e(__('Click to Apply')) ?>
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        <?php endif; ?>
+
+        <?php if (!empty($recommendations['alternative_resources'])): ?>
+          <div>
+            <div class="fw-bold small text-uppercase text-muted mb-3 d-flex align-items-center gap-2" style="font-size:11px;letter-spacing:0.06em">
+              <i class="bi bi-building text-primary"></i>
+              <?= e(__('Alternative Rooms (Same Category, Same Time)')) ?>
+            </div>
+            <div class="row g-2">
+              <?php foreach ($recommendations['alternative_resources'] as $res): ?>
+                <div class="col-sm-6 col-lg-4">
+                  <button type="button"
+                          class="btn w-100 text-start p-3 rounded-3 border border-primary-subtle"
+                          style="background:white;transition:all .2s"
+                          onclick="applyResource(<?= (int)$res['id'] ?>)"
+                          onmouseover="this.style.background='#eff6ff'"
+                          onmouseout="this.style.background='white'">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <i class="bi bi-box-seam text-primary"></i>
+                      <span class="fw-semibold text-dark" style="font-size:13px"><?= e($res['resource_name']) ?></span>
+                    </div>
+                    <div class="text-muted small">
+                      <i class="bi bi-tag me-1"></i><?= e($res['resource_code']) ?>
+                      <?php if (!empty($res['location'])): ?>
+                        &nbsp;·&nbsp;<i class="bi bi-geo-alt me-1"></i><?= e($res['location']) ?>
+                      <?php endif; ?>
+                    </div>
+                    <div class="mt-2">
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">
+                        <i class="bi bi-arrow-right-circle me-1"></i><?= e(__('Switch to this room')) ?>
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        <?php endif; ?>
+
+        <?php if (empty($recommendations['alternative_slots']) && empty($recommendations['alternative_resources'])): ?>
+          <div class="text-center text-muted py-2">
+            <i class="bi bi-calendar-x d-block fs-2 mb-2"></i>
+            <?= e(__('No alternative slots or resources found for this period.')) ?>
+          </div>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
+
     <div class="card">
       <div class="card-header">
         <i class="bi bi-calendar-plus me-2" style="color:var(--primary)"></i>
@@ -191,3 +286,45 @@ $isMaintenance = (setting('maintenance_mode', '0') === '1' && !Auth::isAdmin());
 
   </div>
 </div>
+
+<script>
+function applySlot(date, start, end) {
+  document.getElementById('bookingDate').value = date;
+  document.getElementById('startTime').value = start;
+  document.getElementById('endTime').value = end;
+  
+  // Trigger change
+  const el = document.getElementById('bookingDate');
+  if (el) {
+    const event = new Event('change');
+    el.dispatchEvent(event);
+  }
+  
+  // Visual effect
+  const card = document.querySelector('.card');
+  if (card) {
+    card.style.transition = 'all 0.3s ease';
+    card.style.boxShadow = '0 0 15px rgba(245, 158, 11, 0.4)';
+    setTimeout(() => card.style.boxShadow = '', 1000);
+  }
+}
+
+function applyResource(id) {
+  document.getElementById('resourceSelect').value = id;
+  
+  // Trigger change
+  const el = document.getElementById('resourceSelect');
+  if (el) {
+    const event = new Event('change');
+    el.dispatchEvent(event);
+  }
+  
+  // Visual effect
+  const card = document.querySelector('.card');
+  if (card) {
+    card.style.transition = 'all 0.3s ease';
+    card.style.boxShadow = '0 0 15px rgba(67, 97, 238, 0.4)';
+    setTimeout(() => card.style.boxShadow = '', 1000);
+  }
+}
+</script>
