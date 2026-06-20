@@ -27,6 +27,12 @@ class DashboardController extends Controller
     {
         Middleware::auth();
 
+        try {
+            (new BookingService())->autoReleaseNoShows();
+        } catch (Throwable $e) {
+            // Ignore background errors
+        }
+
         $role = Auth::primaryRole();
         $userId = (int) Auth::id();
 
@@ -50,11 +56,11 @@ class DashboardController extends Controller
     private function adminDashboard(): void
     {
         $stats = $this->bookingRepo->getDashboardStats();
-        $stats['total_users'] = $this->userRepo->countAll();
-        $stats['total_resources'] = $this->resourceRepo->count([]);
+        $stats['total_users']       = $this->userRepo->countAll();
+        $stats['total_resources']   = $this->resourceRepo->count([]);
         $stats['pending_approvals'] = $this->approvalRepo->countPending();
 
-        $rawCharts = $this->reportService->getDashboardChartData();
+        $rawCharts      = $this->reportService->getDashboardChartData();
         $recentActivity = $this->auditLogRepo->findAll([], 10, 0);
         $upcomingBookings = $this->bookingRepo->findAll(
             ['date_from' => date('Y-m-d H:i:s')],
@@ -62,19 +68,25 @@ class DashboardController extends Controller
             0
         );
 
-        // Format raw chart data into the arrays that admin.php JavaScript expects
+        $peakVsOffPeak = $rawCharts['peak_vs_off_peak'] ?? ['peak' => 0, 'off_peak' => 0];
+
+        // Build chart data for admin dashboard (5 charts)
         $chartData = [
-            'category_labels' => array_column($rawCharts['bookings_by_category'] ?? [], 'category_name'),
-            'category_data'   => array_map('intval', array_column($rawCharts['bookings_by_category'] ?? [], 'count')),
-            'peak_labels'     => array_column($rawCharts['monthly_trend'] ?? [], 'month'),
-            'peak_data'       => array_map('intval', array_column($rawCharts['monthly_trend'] ?? [], 'count')),
+            'category_labels'  => array_column($rawCharts['bookings_by_category'] ?? [], 'category_name'),
+            'category_data'    => array_map('intval', array_column($rawCharts['bookings_by_category'] ?? [], 'count')),
+            'peak_labels'      => array_column($rawCharts['monthly_trend'] ?? [], 'month'),
+            'peak_data'        => array_map('intval', array_column($rawCharts['monthly_trend'] ?? [], 'count')),
+            'resource_labels'  => array_column($rawCharts['top_resources'] ?? [], 'resource_name'),
+            'resource_data'    => array_map('intval', array_column($rawCharts['top_resources'] ?? [], 'count')),
+            'peak'             => (int) ($peakVsOffPeak['peak'] ?? 0),
+            'off_peak'         => (int) ($peakVsOffPeak['off_peak'] ?? 0),
         ];
 
         $this->view('dashboard/admin', [
-            'title' => 'Admin Dashboard',
-            'stats' => $stats,
-            'chartData' => $chartData,
-            'recentActivity' => $recentActivity,
+            'title'            => 'Admin Dashboard',
+            'stats'            => $stats,
+            'chartData'        => $chartData,
+            'recentActivity'   => $recentActivity,
             'upcomingBookings' => $upcomingBookings,
         ]);
     }
