@@ -24,6 +24,13 @@ class UserRepository
         return $stmt->fetch() ?: null;
     }
 
+    public function findByEmail(string $email): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        return $stmt->fetch() ?: null;
+    }
+
     public function getRoles(int $userId): array
     {
         $stmt = $this->db->prepare('SELECT r.role_name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ?');
@@ -123,17 +130,18 @@ class UserRepository
         }
     }
 
-    public function update(int $id, array $data, array $roleIds): void
+    public function update(int $id, array $data, ?array $roleIds = null): void
     {
         $this->db->beginTransaction();
         try {
-            $fields = ['department_id', 'full_name', 'username', 'email', 'phone', 'student_code', 'staff_code', 'status', 'avatar'];
+            $fields = ['department_id', 'full_name', 'username', 'email', 'phone', 'student_code', 'staff_code', 'status', 'avatar',
+                       'failed_login_attempts', 'locked_until', 'must_change_password', 'last_login_at', 'remember_token'];
             $sets = [];
             $params = [];
             foreach ($fields as $f) {
                 if (array_key_exists($f, $data)) {
                     $sets[] = "$f = ?";
-                    $params[] = $data[$f] ?: null;
+                    $params[] = ($data[$f] === '' || $data[$f] === null) ? null : $data[$f];
                 }
             }
             if (!empty($data['password'])) {
@@ -144,10 +152,12 @@ class UserRepository
                 $params[] = $id;
                 $this->db->prepare('UPDATE users SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($params);
             }
-            $this->db->prepare('DELETE FROM user_roles WHERE user_id = ?')->execute([$id]);
-            $roleStmt = $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?,?)');
-            foreach ($roleIds as $roleId) {
-                $roleStmt->execute([$id, $roleId]);
+            if ($roleIds !== null) {
+                $this->db->prepare('DELETE FROM user_roles WHERE user_id = ?')->execute([$id]);
+                $roleStmt = $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?,?)');
+                foreach ($roleIds as $roleId) {
+                    $roleStmt->execute([$id, $roleId]);
+                }
             }
             $this->db->commit();
         } catch (Exception $e) {

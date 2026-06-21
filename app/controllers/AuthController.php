@@ -36,7 +36,8 @@ class AuthController extends Controller
             redirect('login.php');
         }
 
-        $result = $this->authService->login($login, $password);
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $result = $this->authService->login($login, $password, $ip);
 
         if ($result['success']) {
             Flash::success('Welcome back, ' . ($result['user']['full_name'] ?? 'User') . '!');
@@ -72,8 +73,8 @@ class AuthController extends Controller
                 redirect('index.php?page=forgot-password');
             }
 
-            $this->userRepo->findByLogin($email);
-            Flash::success('If an account exists with that email, password reset instructions have been sent.');
+            $this->authService->createPasswordResetToken($email);
+            Flash::success('If an account exists with that email, a reset notification has been sent to your account.');
             redirect('login.php');
         }
 

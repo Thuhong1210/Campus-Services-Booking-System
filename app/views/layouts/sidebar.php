@@ -18,9 +18,11 @@ $navItems = match ($role) {
         ['page' => 'bookings', 'action' => 'index', 'label' => 'Booking Management', 'icon' => 'bi-calendar-check'],
         ['page' => 'approvals', 'action' => 'index', 'label' => 'Approval Requests', 'icon' => 'bi-check2-square'],
         ['page' => 'cancellations', 'action' => 'index', 'label' => 'Cancellations', 'icon' => 'bi-x-circle'],
+        ['page' => 'waitlist', 'action' => 'index', 'label' => 'Waitlist', 'icon' => 'bi-hourglass-split'],
 
         ['group' => 'Reports & System'],
         ['page' => 'reports', 'action' => 'index', 'label' => 'Usage Reports', 'icon' => 'bi-bar-chart'],
+        ['page' => 'import', 'action' => 'index', 'label' => 'Import CSV/Excel', 'icon' => 'bi-upload'],
         ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
         ['page' => 'audit-logs', 'action' => 'index', 'label' => 'Audit Logs', 'icon' => 'bi-journal-text'],
         ['page' => 'settings', 'action' => 'index', 'label' => 'Settings', 'icon' => 'bi-gear'],
@@ -33,6 +35,7 @@ $navItems = match ($role) {
         ['page' => 'bookings', 'action' => 'calendar', 'label' => 'Resource Calendar', 'icon' => 'bi-calendar3'],
         ['page' => 'bookings', 'action' => 'create', 'label' => 'Supervised Booking', 'icon' => 'bi-plus-circle'],
         ['page' => 'bookings', 'action' => 'myBookings', 'label' => 'My Bookings', 'icon' => 'bi-list-check'],
+        ['page' => 'waitlist', 'action' => 'index', 'label' => 'My Waitlist', 'icon' => 'bi-hourglass-split'],
         ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
         ['page' => 'profile', 'action' => 'index', 'label' => 'Profile', 'icon' => 'bi-person'],
     ],
@@ -41,6 +44,7 @@ $navItems = match ($role) {
         ['page' => 'resources', 'action' => 'browse', 'label' => 'Browse Resources', 'icon' => 'bi-search'],
         ['page' => 'bookings', 'action' => 'calendar', 'label' => 'Resource Calendar', 'icon' => 'bi-calendar3'],
         ['page' => 'bookings', 'action' => 'index', 'label' => 'All Bookings', 'icon' => 'bi-list-check'],
+        ['page' => 'waitlist', 'action' => 'index', 'label' => 'My Waitlist', 'icon' => 'bi-hourglass-split'],
         ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
         ['page' => 'profile', 'action' => 'index', 'label' => 'Profile', 'icon' => 'bi-person'],
     ],
@@ -51,6 +55,7 @@ $navItems = match ($role) {
         ['page' => 'bookings', 'action' => 'create', 'label' => 'Create Booking', 'icon' => 'bi-plus-circle'],
         ['page' => 'bookings', 'action' => 'myBookings', 'label' => 'My Bookings', 'icon' => 'bi-list-check'],
         ['page' => 'bookings', 'action' => 'mySchedule', 'label' => 'My Schedule', 'icon' => 'bi-calendar-week'],
+        ['page' => 'waitlist', 'action' => 'index', 'label' => 'My Waitlist', 'icon' => 'bi-hourglass-split'],
         ['page' => 'notifications', 'action' => 'index', 'label' => 'Notifications', 'icon' => 'bi-bell'],
         ['page' => 'profile', 'action' => 'index', 'label' => 'Profile', 'icon' => 'bi-person'],
     ],
@@ -119,8 +124,8 @@ foreach ($navItems as $item) {
         <li class="nav-item">
           <a class="nav-link sidebar-link <?= $active ? 'active' : '' ?>" href="<?= route_url($item['page'], $item['action']) ?>">
             <i class="bi <?= e($item['icon']) ?>"></i><?= e(__($item['label'])) ?>
-            <?php if ($item['page'] === 'notifications' && $unreadNotifications > 0): ?>
-              <span class="badge bg-danger ms-auto"><?= $unreadNotifications ?></span>
+            <?php if ($item['page'] === 'notifications'): ?>
+              <span class="badge bg-danger ms-auto sidebar-notification-badge <?= $unreadNotifications > 0 ? '' : 'd-none' ?>"><?= $unreadNotifications ?></span>
             <?php endif; ?>
           </a>
         </li>

@@ -63,11 +63,9 @@ if ($user) {
     <a href="<?= route_url('notifications') ?>" class="position-relative text-decoration-none"
        style="color:var(--text-muted)" title="Notifications">
       <i class="bi bi-bell" style="font-size:18px"></i>
-      <?php if ($unreadNotifications > 0): ?>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
-          <?= $unreadNotifications ?>
-        </span>
-      <?php endif; ?>
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge <?= $unreadNotifications > 0 ? '' : 'd-none' ?>">
+        <?= $unreadNotifications ?>
+      </span>
     </a>
 
     <div class="d-none d-sm-flex flex-column text-end" style="line-height:1.2">
