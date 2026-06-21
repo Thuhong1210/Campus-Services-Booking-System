@@ -22,6 +22,7 @@ node_modules/
 
 # Uploads (user data, không nên push)
 public/uploads/
+public/assets/avatars/
 
 # Cache
 *.cache
