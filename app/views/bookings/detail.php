@@ -82,6 +82,51 @@ $isNoShow    = (int)($booking['is_no_show']  ?? 0) === 1;
       </div>
     </div>
 
+    <!-- Equipment Addons -->
+    <?php if (!empty($equipments)): ?>
+    <div class="card mb-4 border-0 shadow-sm rounded-3">
+      <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+        <i class="bi bi-tools text-primary" style="font-size:1.1rem"></i>
+        <span class="fw-semibold"><?= e(__('Booked Equipment Addons')) ?></span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size:14px">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4 border-0" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em"><?= e(__('Equipment Name')) ?></th>
+                <th class="border-0 text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;width:120px"><?= e(__('Quantity')) ?></th>
+                <th class="pe-4 border-0 text-end" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;width:120px"><?= e(__('Status')) ?></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($equipments as $eq): ?>
+              <tr>
+                <td class="ps-4 border-0 py-3">
+                  <div class="fw-semibold" style="color:var(--text-sub)"><?= e($eq['equipment_name']) ?></div>
+                  <?php if (!empty($eq['description'])): ?>
+                  <div class="text-muted small mt-0.5"><?= e($eq['description']) ?></div>
+                  <?php endif; ?>
+                </td>
+                <td class="border-0 text-center py-3 fw-bold" style="color:var(--text-sub)">
+                  <?= e($eq['quantity']) ?>
+                </td>
+                <td class="pe-4 border-0 text-end py-3">
+                  <?php if ($eq['status'] === 'available'): ?>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1" style="font-size:12px"><?= e(__('Available')) ?></span>
+                  <?php else: ?>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1" style="font-size:12px"><?= e($eq['status']) ?></span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Approval History -->
     <?php if (!empty($approvals)): ?>
     <div class="card mb-4 border-0 shadow-sm rounded-3">

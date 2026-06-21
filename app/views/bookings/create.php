@@ -121,6 +121,28 @@ $isMaintenance = (setting('maintenance_mode', '0') === '1' && !Auth::isAdmin());
             <?= e(__('No alternative slots or resources found for this period.')) ?>
           </div>
         <?php endif; ?>
+
+        <!-- Join Waitlist Option -->
+        <hr class="my-3">
+        <div class="text-center">
+          <p class="text-muted small mb-2"><?= e(__('Or join the waitlist for your original slot:')) ?></p>
+          <form method="POST" action="<?= route_url('waitlist', 'store') ?>" id="waitlistForm">
+            <?= csrf_field() ?>
+            <input type="hidden" name="resource_id" id="wl_resource_id" value="<?= (int)old('resource_id') ?>">
+            <input type="hidden" name="start_datetime" id="wl_start" value="<?= e(old('start_datetime', (old('booking_date')?' '.old('booking_date').' '.old('start_time', '08:00').':00':''))) ?>">
+            <input type="hidden" name="end_datetime" id="wl_end" value="">
+            <button type="submit" class="btn btn-warning" onclick="
+              document.getElementById('wl_resource_id').value = document.getElementById('resourceSelect').value;
+              var d = document.getElementById('bookingDate').value;
+              var s = document.getElementById('startTime').value;
+              var e2 = document.getElementById('endTime').value;
+              document.getElementById('wl_start').value = d+' '+s+':00';
+              document.getElementById('wl_end').value = d+' '+e2+':00';
+            ">
+              <i class="bi bi-hourglass-split me-1"></i><?= e(__('Join Waitlist for this Slot')) ?>
+            </button>
+          </form>
+        </div>
       </div>
     <?php endif; ?>
 
@@ -230,7 +252,55 @@ $isMaintenance = (setting('maintenance_mode', '0') === '1' && !Auth::isAdmin());
                           placeholder="<?= e(__('Any special requirements or details (optional)')) ?>"><?= e(old('additional_notes')) ?></textarea>
               </div>
 
-            </div><!-- /.row -->
+              <!-- Recurring Booking Toggle -->
+              <div class="col-12">
+                <div class="card bg-light border-0">
+                  <div class="card-body py-3">
+                    <div class="form-check form-switch mb-2">
+                      <input class="form-check-input" type="checkbox" name="is_recurring" id="isRecurring" value="1"
+                             onchange="document.getElementById('recurringOptions').style.display=this.checked?'block':'none'"
+                             <?= old('is_recurring') ? 'checked' : '' ?>>
+                      <label class="form-check-label fw-semibold" for="isRecurring">
+                        <i class="bi bi-arrow-repeat me-1 text-primary"></i><?= e(__('Recurring Booking')) ?>
+                      </label>
+                    </div>
+                    <div id="recurringOptions" style="display:<?= old('is_recurring') ? 'block' : 'none' ?>">
+                      <div class="row g-2">
+                        <div class="col-sm-6">
+                          <label class="form-label small fw-semibold"><?= e(__('Repeat Every')) ?></label>
+                          <select name="recurring_type" class="form-select form-select-sm">
+                            <option value="weekly" <?= old('recurring_type') === 'weekly' ? 'selected' : '' ?>><?= e(__('Week')) ?></option>
+                            <option value="monthly" <?= old('recurring_type') === 'monthly' ? 'selected' : '' ?>><?= e(__('Month')) ?></option>
+                          </select>
+                        </div>
+                        <div class="col-sm-6">
+                          <label class="form-label small fw-semibold"><?= e(__('Occurrences')) ?> (2–<?= setting('recurring_max_occurrences', 12) ?>)</label>
+                          <input type="number" name="recurring_count" class="form-control form-control-sm"
+                                 min="2" max="<?= setting('recurring_max_occurrences', 12) ?>"
+                                 value="<?= (int) old('recurring_count', 4) ?>">
+                        </div>
+                      </div>
+                      <p class="text-muted small mb-0 mt-2">
+                        <i class="bi bi-info-circle me-1"></i><?= e(__('Occurrences with conflicts will be automatically skipped.')) ?>
+                      </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equipment Addons Section -->
+          <div class="col-12 mt-3" id="equipmentAddonsSection" style="display:none">
+            <label class="form-label fw-semibold"><i class="bi bi-tools me-1 text-primary"></i><?= e(__('Request Equipment Addons')) ?></label>
+            <div class="card border border-light-subtle rounded-3">
+              <div class="card-body py-2 px-3">
+                <p class="text-muted small mb-2"><?= e(__('The following equipment is available in this room/resource:')) ?></p>
+                <div id="equipmentList" class="row g-2">
+                  <!-- Loaded via AJAX -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /.row -->
 
             <!-- Submit -->
             <div class="mt-4 pt-3 d-flex gap-2" style="border-top:var(--border-thin)">

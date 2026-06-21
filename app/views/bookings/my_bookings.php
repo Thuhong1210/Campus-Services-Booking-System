@@ -140,6 +140,24 @@
                 <i class="bi bi-x-lg"></i>
               </button>
               <?php endif; ?>
+
+              <!-- Rate (completed bookings without feedback) -->
+              <?php if ($b['status'] === 'completed'): ?>
+              <a href="<?= route_url('feedback', 'create', ['booking_id' => $b['id']]) ?>"
+                 class="btn btn-sm btn-light text-warning" title="Rate this booking">
+                <i class="bi bi-star-fill"></i>
+              </a>
+              <?php endif; ?>
+
+              <!-- Cancel recurring series -->
+              <?php if (!empty($b['recurring_group_id']) && in_array($b['status'], ['pending','approved'])): ?>
+              <button type="button" class="btn btn-sm btn-light text-danger"
+                      data-bs-toggle="modal"
+                      data-bs-target="#cancelRecModal<?= $b['id'] ?>"
+                      title="Cancel entire recurring series">
+                <i class="bi bi-arrow-repeat"></i>
+              </button>
+              <?php endif; ?>
             </div>
           </td>
         </tr>

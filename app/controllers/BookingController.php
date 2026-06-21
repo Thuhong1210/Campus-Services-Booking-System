@@ -110,6 +110,31 @@ class BookingController extends Controller
             redirect('index.php?page=bookings&action=create');
         }
 
+        // Handle recurring booking
+        $isRecurring  = !empty($data['is_recurring']);
+        $recurringType = $data['recurring_type'] ?? 'weekly';
+        $recurringCount = min((int) ($data['recurring_count'] ?? 1), (int) setting('recurring_max_occurrences', 12));
+
+        if ($isRecurring && $recurringCount > 1) {
+            $result = $this->bookingService->createRecurring($data, $recurringType, $recurringCount);
+
+            if ($result['success']) {
+                $created = count($result['bookings'] ?? []);
+                $skipped = count($result['conflicts'] ?? []);
+                $msg = "Created $created recurring booking(s).";
+                if ($skipped > 0) {
+                    $msg .= " $skipped occurrence(s) skipped due to conflicts.";
+                }
+                Flash::success($msg);
+                redirect('index.php?page=bookings/my');
+            }
+
+            Flash::error($result['message']);
+            $_SESSION['old_input'] = $data;
+            redirect('index.php?page=bookings&action=create');
+        }
+
+        // Single booking
         $result = $this->bookingService->createBooking($data);
 
         if ($result['success']) {
@@ -124,6 +149,46 @@ class BookingController extends Controller
         }
         redirect('index.php?page=bookings&action=create');
     }
+
+    /** Cancel all bookings in a recurring group */
+    public function cancelRecurring(): void
+    {
+        Middleware::auth();
+        $this->verifyCsrf();
+
+        $groupId = trim((string) ($_POST['recurring_group_id'] ?? ''));
+        $reason  = trim((string) ($_POST['reason'] ?? 'Cancelled recurring series.'));
+        $userId  = (int) Auth::id();
+        $isAdmin = Auth::isAdmin();
+
+        if (!$groupId) {
+            Flash::error('Invalid recurring group.');
+            redirect('index.php?page=bookings/my');
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare(
+            'SELECT id, user_id FROM bookings
+             WHERE recurring_group_id = ? AND status IN ("pending","approved")'
+        );
+        $stmt->execute([$groupId]);
+        $bookings = $stmt->fetchAll();
+
+        $cancelled = 0;
+        foreach ($bookings as $b) {
+            if (!$isAdmin && (int) $b['user_id'] !== $userId) {
+                continue;
+            }
+            $result = $this->cancellationService->cancel((int) $b['id'], $userId, $reason, $isAdmin);
+            if ($result['success']) {
+                $cancelled++;
+            }
+        }
+
+        Flash::success("Cancelled $cancelled booking(s) in the recurring series.");
+        redirect('index.php?page=bookings/my');
+    }
+
 
     public function edit(): void
     {
@@ -213,10 +278,14 @@ class BookingController extends Controller
         $approval = $this->approvalRepo->findByBooking($id);
         $approvals = $approval ? [$approval] : [];
 
+        $bookingEquipmentRepo = new BookingEquipmentRepository();
+        $equipments = $bookingEquipmentRepo->findByBooking($id);
+
         $this->view('bookings/detail', [
             'title' => 'Booking ' . $booking['booking_reference'],
             'booking' => $booking,
             'approvals' => $approvals,
+            'equipments' => $equipments,
             'cancellation' => (new CancellationRepository())->findByBooking($id),
             'canCancel' => in_array($booking['status'], ['pending', 'approved'], true)
                 && (Auth::isAdmin() || (int) $booking['user_id'] === Auth::id()),

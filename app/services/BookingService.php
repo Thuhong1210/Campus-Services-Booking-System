@@ -52,6 +52,28 @@ class BookingService
             return ['success' => false, 'message' => implode(' ', $policyErrors)];
         }
 
+        // Validate equipment availability
+        $bookingEquipmentRepo = new BookingEquipmentRepository();
+        $requestedEquipment = $data['equipment'] ?? [];
+        if (!empty($requestedEquipment)) {
+            $equipmentRepo = new EquipmentRepository();
+            foreach ($requestedEquipment as $eqId => $qty) {
+                $qty = (int) $qty;
+                if ($qty <= 0) continue;
+                
+                $eq = $equipmentRepo->findById((int) $eqId);
+                if (!$eq || $eq['status'] !== 'available') {
+                    return ['success' => false, 'message' => "Requested equipment #$eqId is not available."];
+                }
+                
+                $allocated = $bookingEquipmentRepo->getAllocatedQuantity((int) $eqId, $data['start_datetime'], $data['end_datetime']);
+                $available = (int) $eq['quantity'] - $allocated;
+                if ($qty > $available) {
+                    return ['success' => false, 'message' => sprintf('Not enough stock for "%s". Requested: %d, Available: %d.', $eq['equipment_name'], $qty, $available)];
+                }
+            }
+        }
+
         $conflicts = $this->bookingRepo->findConflicts(
             (int) $data['resource_id'],
             $data['start_datetime'],
@@ -117,6 +139,16 @@ class BookingService
             'requires_approval' => $requiresApproval ? 1 : 0,
             'qr_token' => $qrToken,
         ]);
+
+        // Insert equipment associations
+        if (!empty($requestedEquipment)) {
+            foreach ($requestedEquipment as $eqId => $qty) {
+                $qty = (int) $qty;
+                if ($qty > 0) {
+                    $bookingEquipmentRepo->create($bookingId, (int) $eqId, $qty);
+                }
+            }
+        }
 
         $booking = $this->bookingRepo->findById($bookingId);
 
@@ -518,5 +550,126 @@ class BookingService
             $releasedCount++;
         }
         return $releasedCount;
+    }
+
+    /**
+     * Create a series of recurring bookings (weekly or monthly).
+     * All occurrences are validated BEFORE any are created.
+     */
+    public function createRecurring(array $data, string $type, int $count): array
+    {
+        if (!in_array($type, ['weekly', 'monthly'], true)) {
+            return ['success' => false, 'message' => 'Invalid recurrence type.'];
+        }
+        if ($count < 2 || $count > 12) {
+            return ['success' => false, 'message' => 'Recurrence count must be between 2 and 12.'];
+        }
+
+        $startTs   = strtotime($data['start_datetime']);
+        $endTs     = strtotime($data['end_datetime']);
+        $duration  = $endTs - $startTs;
+        $resourceId = (int) $data['resource_id'];
+        $userId     = (int) $data['user_id'];
+
+        // Build all occurrence datetimes
+        $occurrences = [];
+        for ($i = 0; $i < $count; $i++) {
+            if ($type === 'weekly') {
+                $offset = $i * 7 * 86400;
+            } else { // monthly
+                $offset = 0;
+                $baseMonth = (int) date('n', $startTs) + $i;
+                $baseYear  = (int) date('Y', $startTs) + (int) floor(($baseMonth - 1) / 12);
+                $baseMonth = (($baseMonth - 1) % 12) + 1;
+                $baseDay   = (int) date('j', $startTs);
+                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $baseMonth, $baseYear);
+                $day = min($baseDay, $daysInMonth);
+                $offsetDate = mktime(
+                    (int) date('H', $startTs),
+                    (int) date('i', $startTs),
+                    0,
+                    $baseMonth, $day, $baseYear
+                );
+                $occurrences[] = [
+                    'start' => date('Y-m-d H:i:s', $offsetDate),
+                    'end'   => date('Y-m-d H:i:s', $offsetDate + $duration),
+                ];
+                continue;
+            }
+            $occurrences[] = [
+                'start' => date('Y-m-d H:i:s', $startTs + $offset),
+                'end'   => date('Y-m-d H:i:s', $startTs + $offset + $duration),
+            ];
+        }
+
+        // Check all occurrences for conflicts first
+        $conflicts = [];
+        foreach ($occurrences as $idx => $occ) {
+            $conflictCheck = $this->bookingRepo->findConflicts($resourceId, $occ['start'], $occ['end']);
+            $maintCheck    = $this->maintenanceRepo->findActiveForResource($resourceId, $occ['start'], $occ['end']);
+            if (!empty($conflictCheck) || !empty($maintCheck)) {
+                $conflicts[] = [
+                    'occurrence' => $idx + 1,
+                    'start'      => $occ['start'],
+                    'end'        => $occ['end'],
+                ];
+            }
+        }
+
+        // Skip conflicts, create the rest
+        $groupId = bin2hex(random_bytes(16)); // UUID-like group identifier
+        $created = [];
+        $db = Database::getInstance()->getConnection();
+
+        foreach ($occurrences as $idx => $occ) {
+            // Skip conflicting occurrences
+            $isConflict = false;
+            foreach ($conflicts as $c) {
+                if ($c['occurrence'] === $idx + 1) {
+                    $isConflict = true;
+                    break;
+                }
+            }
+            if ($isConflict) {
+                continue;
+            }
+
+            $singleData = array_merge($data, [
+                'start_datetime'    => $occ['start'],
+                'end_datetime'      => $occ['end'],
+            ]);
+
+            $result = $this->createBooking($singleData);
+
+            if ($result['success'] && isset($result['booking']['id'])) {
+                $bId = (int) $result['booking']['id'];
+                // Tag with recurring group
+                $db->prepare('UPDATE bookings SET recurring_group_id = ?, is_recurring = 1 WHERE id = ?')
+                   ->execute([$groupId, $bId]);
+                // Record in recurring_bookings table
+                $db->prepare(
+                    'INSERT INTO recurring_bookings (group_id, booking_id, recurrence_type, occurrence_number)
+                     VALUES (?, ?, ?, ?)'
+                )->execute([$groupId, $bId, $type, $idx + 1]);
+
+                $created[] = $result['booking'];
+            }
+        }
+
+        if (empty($created)) {
+            return [
+                'success'   => false,
+                'message'   => 'All occurrences conflict with existing bookings.',
+                'conflicts' => $conflicts,
+            ];
+        }
+
+        return [
+            'success'   => true,
+            'message'   => count($created) . ' recurring booking(s) created.',
+            'bookings'  => $created,
+            'conflicts' => $conflicts,
+            'group_id'  => $groupId,
+        ];
     }
 }
