@@ -77,14 +77,18 @@ foreach ($navItems as $item) {
 }
 ?>
 <nav id="sidebar" class="sidebar">
-  <div class="sidebar-header">
-    <div class="d-flex align-items-center gap-2">
+  <div class="sidebar-header" style="height:auto; min-height:var(--topbar-h); padding-top:10px; padding-bottom:10px">
+    <div class="d-flex align-items-center gap-2 w-100">
       <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
-      <div style="overflow:hidden">
-        <div class="brand-text lh-1" style="font-size:13px;font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden" title="<?= e(setting('system_name', 'Campus Services')) ?>">
-          <?= e(setting('system_name', 'Campus Services')) ?>
+      <div style="min-width:0; flex:1">
+        <?php
+        $displayName = setting('system_name', 'Campus Services Booking');
+        $displayName = str_replace(' System', '', $displayName);
+        ?>
+        <div class="brand-text" style="font-size:13px;font-weight:700;line-height:1.2;color:var(--primary)" title="<?= e(setting('system_name', 'Campus Services')) ?>">
+          <?= e($displayName) ?>
         </div>
-        <div style="font-size:10px;color:var(--text-muted)">IS-VNU Booking</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">IS-VNU Booking</div>
       </div>
     </div>
   </div>

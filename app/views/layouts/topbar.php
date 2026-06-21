@@ -75,8 +75,12 @@ if ($user) {
       <span style="font-size:11px;color:var(--text-muted)"><?= e(__($role)) ?></span>
     </div>
 
-    <a href="<?= route_url('profile') ?>" class="avatar-circle text-decoration-none" title="Profile">
-      <?= strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) ?>
+    <a href="<?= route_url('profile') ?>" class="avatar-circle text-decoration-none overflow-hidden p-0 d-flex align-items-center justify-content-center" title="Profile">
+      <?php if (!empty($user['avatar'])): ?>
+        <img src="<?= asset('avatars/' . $user['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+      <?php else: ?>
+        <?= strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) ?>
+      <?php endif; ?>
     </a>
   </div>
 </header>

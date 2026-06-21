@@ -103,8 +103,21 @@ class ProfileController extends Controller
 
         $userId = (int) Auth::id();
 
+        // Map PHP upload error codes to user-friendly messages
+        $uploadErrors = [
+            UPLOAD_ERR_INI_SIZE   => 'File is too large (exceeds server limit of 10MB).',
+            UPLOAD_ERR_FORM_SIZE  => 'File is too large (exceeds form limit).',
+            UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded. Please try again.',
+            UPLOAD_ERR_NO_FILE    => 'No file was selected.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Server temporary folder is missing.',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+            UPLOAD_ERR_EXTENSION  => 'A PHP extension blocked the file upload.',
+        ];
+
         if (empty($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
-            Flash::error('No file uploaded.');
+            $errCode = $_FILES['avatar']['error'] ?? UPLOAD_ERR_NO_FILE;
+            $errMsg  = $uploadErrors[$errCode] ?? 'Unknown upload error (code: ' . $errCode . ').';
+            Flash::error($errMsg);
             redirect('index.php?page=profile');
         }
 
@@ -115,17 +128,22 @@ class ProfileController extends Controller
         finfo_close($finfo);
 
         if (!in_array($mime, $allowedTypes)) {
-            Flash::error('Only JPG, PNG, GIF, WEBP images are allowed.');
+            Flash::error('Only JPG, PNG, GIF, or WEBP images are allowed.');
             redirect('index.php?page=profile');
         }
 
-        if ($file['size'] > 2 * 1024 * 1024) {
-            Flash::error('Image must be under 2MB.');
+        if ($file['size'] > 10 * 1024 * 1024) {
+            Flash::error('Image must be under 10MB.');
             redirect('index.php?page=profile');
         }
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = 'avatar_' . $userId . '_' . time() . '.' . strtolower($ext);
+        if (empty($ext)) {
+            // Derive extension from MIME type if name has none
+            $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+            $ext = $mimeToExt[$mime] ?? 'jpg';
+        }
+        $filename  = 'avatar_' . $userId . '_' . time() . '.' . strtolower($ext);
         $uploadDir = dirname(__DIR__, 2) . '/public/assets/avatars/';
 
         if (!is_dir($uploadDir)) {
@@ -133,12 +151,17 @@ class ProfileController extends Controller
         }
 
         if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
-            Flash::error('Failed to upload image.');
+            Flash::error('Failed to save the uploaded image. Please try again.');
             redirect('index.php?page=profile');
         }
 
-        $this->userRepo->update($userId, ['avatar' => $filename], $this->getCurrentRoleIds($userId));
-        $_SESSION['user']['avatar'] = $filename;
+        try {
+            $this->userRepo->update($userId, ['avatar' => $filename], $this->getCurrentRoleIds($userId));
+            $_SESSION['user']['avatar'] = $filename;
+        } catch (\Exception $e) {
+            Flash::error('Profile photo uploaded but could not be saved to database.');
+            redirect('index.php?page=profile');
+        }
 
         Flash::success('Profile photo updated successfully.');
         redirect('index.php?page=profile');

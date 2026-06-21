@@ -26,7 +26,13 @@ $roleList = implode(', ', $user['roles'] ?? []);
   <div class="col-md-4 col-lg-3">
     <div class="card text-center">
       <div class="card-body py-4">
-        <div class="avatar-circle lg mx-auto mb-3"><?= $initials ?></div>
+        <div class="avatar-circle lg mx-auto mb-3 overflow-hidden p-0 d-flex align-items-center justify-content-center">
+          <?php if (!empty($user['avatar'])): ?>
+            <img src="<?= asset('avatars/' . $user['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+          <?php else: ?>
+            <?= $initials ?>
+          <?php endif; ?>
+        </div>
         <h5 class="fw-bold mb-1"><?= e($user['full_name']) ?></h5>
         <p class="mb-1" style="font-size:13px;color:var(--text-sub)"><?= e($user['email']) ?></p>
         <p class="mb-3" style="font-size:12.5px;color:var(--text-muted)">@<?= e($user['username'] ?? '') ?></p>

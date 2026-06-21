@@ -62,6 +62,8 @@ function status_badge(string $status, string $type = 'booking'): string
             'cancelled' => 'bg-secondary',
             'completed' => 'bg-primary',
             'expired' => 'bg-dark',
+            'checked_in' => 'bg-info text-white',
+            'no_show' => 'bg-danger text-white',
         ],
         'resource' => [
             'available' => 'bg-success',
@@ -73,7 +75,7 @@ function status_badge(string $status, string $type = 'booking'): string
     $map = $classes[$type] ?? $classes['booking'];
     $class = $map[$status] ?? 'bg-secondary';
     $label = ucwords(str_replace('_', ' ', $status));
-    return '<span class="badge ' . $class . '">' . e($label) . '</span>';
+    return '<span class="badge ' . $class . '">' . e(__($label)) . '</span>';
 }
 
 function format_datetime(?string $dt, string $format = 'd/m/Y H:i'): string

@@ -60,6 +60,9 @@ class BookingController extends Controller
             ? $this->userRepo->all(['role' => 'Student', 'status' => 'active'], 200, 0)
             : [];
 
+        $recommendations = $_SESSION['booking_recommendations'] ?? [];
+        unset($_SESSION['booking_recommendations']);
+
         $this->view('bookings/create', [
             'title' => $canSupervise ? 'Create Supervised Booking' : 'Create Booking',
             'resources' => $this->resourceRepo->findAvailable([]),
@@ -67,6 +70,7 @@ class BookingController extends Controller
             'preselectedResourceId' => (int) ($this->get()['resource_id'] ?? 0),
             'canSupervise' => $canSupervise,
             'students' => $students,
+            'recommendations' => $recommendations,
         ]);
     }
 
@@ -115,6 +119,9 @@ class BookingController extends Controller
 
         Flash::error($result['message']);
         $_SESSION['old_input'] = $data;
+        if (!empty($result['recommendations'])) {
+            $_SESSION['booking_recommendations'] = $result['recommendations'];
+        }
         redirect('index.php?page=bookings&action=create');
     }
 
@@ -375,6 +382,101 @@ class BookingController extends Controller
         }
 
         redirect(Auth::isAdmin() ? 'index.php?page=bookings' : 'index.php?page=bookings/my');
+    }
+
+    public function exportIcs(): void
+    {
+        Middleware::auth();
+        $id = (int) ($this->get()['id'] ?? 0);
+        if ($id <= 0) {
+            Flash::error('Invalid booking ID.');
+            redirect('index.php?page=bookings/my');
+        }
+        
+        $booking = $this->bookingRepo->findById($id);
+        if (!$booking) {
+            Flash::error('Booking not found.');
+            redirect('index.php?page=bookings/my');
+        }
+
+        $isAdminOrStaff = Auth::hasAnyRole(['Admin', 'Staff', 'Lecturer', 'Approver']);
+        if ($booking['user_id'] !== Auth::id() && !$isAdminOrStaff) {
+            Flash::error('Unauthorized access.');
+            redirect('index.php?page=bookings/my');
+        }
+
+        $start = date('Ymd\THis', strtotime($booking['start_datetime']));
+        $end = date('Ymd\THis', strtotime($booking['end_datetime']));
+        $created = date('Ymd\THis', strtotime($booking['created_at']));
+        
+        $ref = $booking['booking_reference'];
+        $summary = $booking['purpose'];
+        $location = $booking['resource_name'] . ' (' . ($booking['resource_code'] ?? '') . ')';
+        $desc = "Booking Reference: " . $ref . "\\nStatus: " . ucfirst($booking['status']) . "\\nNotes: " . ($booking['additional_notes'] ?? '');
+
+        header('Content-Type: text/calendar; charset=utf-8');
+        header('Content-Disposition: attachment; filename="booking_' . $ref . '.ics"');
+        
+        echo "BEGIN:VCALENDAR\r\n";
+        echo "VERSION:2.0\r\n";
+        echo "PRODID:-//Campus Services Booking System//EN\r\n";
+        echo "CALSCALE:GREGORIAN\r\n";
+        echo "METHOD:PUBLISH\r\n";
+        echo "BEGIN:VEVENT\r\n";
+        echo "UID:" . $ref . "@campus-services-booking\r\n";
+        echo "DTSTAMP:" . $created . "\r\n";
+        echo "DTSTART:" . $start . "\r\n";
+        echo "DTEND:" . $end . "\r\n";
+        echo "SUMMARY:" . $summary . "\r\n";
+        echo "LOCATION:" . $location . "\r\n";
+        echo "DESCRIPTION:" . $desc . "\r\n";
+        echo "END:VEVENT\r\n";
+        echo "END:VCALENDAR\r\n";
+        exit;
+    }
+
+    public function checkIn(): void
+    {
+        Middleware::auth();
+        
+        $token = trim((string) ($this->get()['token'] ?? $this->post()['token'] ?? ''));
+        if ($token === '') {
+            Flash::error('QR token is missing.');
+            redirect('index.php?page=dashboard');
+        }
+
+        $booking = $this->bookingRepo->findByQrToken($token);
+        if (!$booking) {
+            Flash::error('Invalid QR token or booking not found.');
+            redirect('index.php?page=dashboard');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->verifyCsrf();
+            $action = trim((string) ($this->post()['check_action'] ?? ''));
+            $actorId = (int) Auth::id();
+            $isAdminOrStaff = Auth::hasAnyRole(['Admin', 'Staff', 'Lecturer', 'Approver']);
+
+            if ($action === 'checkin') {
+                $result = $this->bookingService->checkIn($token, $actorId, $isAdminOrStaff);
+            } elseif ($action === 'checkout') {
+                $result = $this->bookingService->checkOut($token, $actorId, $isAdminOrStaff);
+            } else {
+                $result = ['success' => false, 'message' => 'Invalid action.'];
+            }
+
+            if ($result['success']) {
+                Flash::success($result['message']);
+            } else {
+                Flash::error($result['message']);
+            }
+            redirect('index.php?page=bookings&action=check-in&token=' . urlencode($token));
+        }
+
+        $this->view('bookings/check_in', [
+            'title' => 'QR Code Check-in / Check-out',
+            'booking' => $booking
+        ]);
     }
 
     private function requireBookingId(): int

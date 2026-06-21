@@ -41,6 +41,8 @@ $postActionMap = [
     'export-schedule' => 'exportSchedule',
     'check-conflict' => 'checkConflict',
     'upload-avatar' => 'uploadAvatar',
+    'export-ics' => 'exportIcs',
+    'check-in' => 'checkIn',
 ];
 
 $routes = [
@@ -53,7 +55,7 @@ $routes = [
     'equipment' => ['EquipmentController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
     'time-slots' => ['TimeSlotController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
     'booking-policies' => ['BookingPolicyController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
-    'bookings' => ['BookingController', ['index' => [Middleware::class, 'staff'], 'create' => [Middleware::class, 'auth'], 'edit' => [Middleware::class, 'auth'], 'show' => [Middleware::class, 'auth'], 'myBookings' => [Middleware::class, 'auth'], 'mySchedule' => [Middleware::class, 'auth'], 'calendar' => [Middleware::class, 'auth'], 'store' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth'], 'cancel' => [Middleware::class, 'auth'], 'checkConflict' => [Middleware::class, 'auth'], 'exportSchedule' => [Middleware::class, 'auth']]],
+    'bookings' => ['BookingController', ['index' => [Middleware::class, 'staff'], 'create' => [Middleware::class, 'auth'], 'edit' => [Middleware::class, 'auth'], 'show' => [Middleware::class, 'auth'], 'myBookings' => [Middleware::class, 'auth'], 'mySchedule' => [Middleware::class, 'auth'], 'calendar' => [Middleware::class, 'auth'], 'store' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth'], 'cancel' => [Middleware::class, 'auth'], 'checkConflict' => [Middleware::class, 'auth'], 'exportSchedule' => [Middleware::class, 'auth'], 'exportIcs' => [Middleware::class, 'auth'], 'checkIn' => [Middleware::class, 'auth']]],
     'approvals' => ['ApprovalController', ['index' => [Middleware::class, 'approver'], 'show' => [Middleware::class, 'approver'], 'history' => [Middleware::class, 'approver'], 'approve' => [Middleware::class, 'approver'], 'reject' => [Middleware::class, 'approver']]],
     'cancellations' => ['CancellationController', ['index' => [Middleware::class, 'admin']]],
     'maintenance' => ['MaintenanceController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
@@ -98,6 +100,10 @@ $actionMap = [
     'export_schedule' => 'exportSchedule',
     'upload-avatar' => 'uploadAvatar',
     'upload_avatar' => 'uploadAvatar',
+    'export-ics' => 'exportIcs',
+    'export_ics' => 'exportIcs',
+    'check-in' => 'checkIn',
+    'check_in' => 'checkIn',
 ];
 
 if (isset($actionMap[$action])) {
