@@ -84,6 +84,14 @@ class CancellationService
             );
         }
 
+        // Process waitlist: notify the first waiting user for this freed slot
+        try {
+            $waitlistService = new WaitlistService();
+            $waitlistService->processWaitlistAfterCancellation($updatedBooking);
+        } catch (Throwable $e) {
+            // Non-fatal: waitlist processing failure should not block cancellation
+        }
+
         return ['success' => true, 'message' => 'Booking cancelled successfully.', 'booking' => $updatedBooking];
     }
 
