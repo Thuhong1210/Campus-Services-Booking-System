@@ -8,13 +8,15 @@ class MaintenanceController extends Controller
     private ResourceRepository $resourceRepo;
     private BookingRepository $bookingRepo;
     private AuditLogService $auditLog;
+    private MaintenanceService $maintenanceService;
 
     public function __construct()
     {
-        $this->maintenanceRepo = new MaintenanceRepository();
-        $this->resourceRepo = new ResourceRepository();
-        $this->bookingRepo = new BookingRepository();
-        $this->auditLog = new AuditLogService();
+        $this->maintenanceRepo    = new MaintenanceRepository();
+        $this->resourceRepo       = new ResourceRepository();
+        $this->bookingRepo        = new BookingRepository();
+        $this->auditLog           = new AuditLogService();
+        $this->maintenanceService = new MaintenanceService();
     }
 
     public function index(): void
@@ -134,5 +136,74 @@ class MaintenanceController extends Controller
         $this->auditLog->log('update_resource', 'maintenance_schedules', $id, $schedule, $data);
         Flash::success('Maintenance schedule updated.');
         redirect('index.php?page=maintenance');
+    }
+
+    /** Show bookings impacted by this maintenance window */
+    public function impactReport(): void
+    {
+        Middleware::admin();
+        $id = (int) ($_GET['id'] ?? 0);
+        $schedule = $this->maintenanceRepo->findById($id);
+        if (!$schedule) {
+            Flash::error('Maintenance schedule not found.');
+            redirect('index.php?page=maintenance');
+        }
+
+        $impacted = $this->maintenanceService->detectImpactedBookings(
+            (int) $schedule['resource_id'],
+            $schedule['maintenance_start'],
+            $schedule['maintenance_end']
+        );
+
+        $this->view('maintenance/impact', [
+            'title'    => 'Maintenance Impact Report',
+            'schedule' => $schedule,
+            'impacted' => $impacted,
+        ]);
+    }
+
+    /** Activate maintenance + notify impacted users */
+    public function activate(): void
+    {
+        Middleware::admin();
+        $this->verifyCsrf();
+        $id     = (int) ($_POST['id'] ?? 0);
+        $result = $this->maintenanceService->activateMaintenance($id, (int) Auth::id());
+        if ($result['success']) {
+            Flash::success($result['message']);
+        } else {
+            Flash::error($result['message']);
+        }
+        redirect('index.php?page=maintenance');
+    }
+
+    /** Complete maintenance + restore resource */
+    public function complete(): void
+    {
+        Middleware::admin();
+        $this->verifyCsrf();
+        $id     = (int) ($_POST['id'] ?? 0);
+        $result = $this->maintenanceService->completeMaintenance($id, (int) Auth::id());
+        if ($result['success']) {
+            Flash::success($result['message']);
+        } else {
+            Flash::error($result['message']);
+        }
+        redirect('index.php?page=maintenance');
+    }
+
+    /** Notify impacted users for a specific maintenance window */
+    public function notifyImpacted(): void
+    {
+        Middleware::admin();
+        $this->verifyCsrf();
+        $id     = (int) ($_POST['id'] ?? 0);
+        $result = $this->maintenanceService->notifyImpactedUsers($id);
+        if ($result['success']) {
+            Flash::success($result['message']);
+        } else {
+            Flash::error($result['message']);
+        }
+        redirect('index.php?page=maintenance&action=impactReport&id=' . $id);
     }
 }

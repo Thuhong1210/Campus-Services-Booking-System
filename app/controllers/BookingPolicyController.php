@@ -192,4 +192,70 @@ class BookingPolicyController extends Controller
             'is_active' => (int) ($data['is_active'] ?? 1),
         ];
     }
+
+    public function simulate(): void
+    {
+        Middleware::admin();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = $this->post();
+            
+            $resourceId  = (int) ($data['resource_id'] ?? 0);
+            $userId      = (int) ($data['user_id'] ?? 0);
+            $start       = trim((string) ($data['start_datetime'] ?? ''));
+            $end         = trim((string) ($data['end_datetime'] ?? ''));
+
+            if (!$resourceId || !$userId || !$start || !$end) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Missing required fields for simulation.']);
+                exit;
+            }
+
+            $userRepo = new UserRepository();
+            $resourceRepo = new ResourceRepository();
+            $policyService = new PolicyService();
+
+            $resource = $resourceRepo->findById($resourceId);
+            if (!$resource) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Resource not found.']);
+                exit;
+            }
+
+            $userRoles = $userRepo->getRoles($userId);
+            
+            $simulationData = [
+                'user_id' => $userId,
+                'resource_id' => $resourceId,
+                'start_datetime' => $start,
+                'end_datetime' => $end,
+            ];
+
+            $errors = $policyService->validate($simulationData, $resource, $userRoles);
+
+            header('Content-Type: application/json');
+            if (empty($errors)) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Success! The simulated booking passes all booking policy rules.'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Policy Violation detected!',
+                    'errors' => $errors
+                ]);
+            }
+            exit;
+        }
+
+        $userRepo = new UserRepository();
+        $resourceRepo = new ResourceRepository();
+
+        $this->view('booking_policies/simulate', [
+            'title' => 'Policy Rule Simulator',
+            'users' => $userRepo->all(['status' => 'active'], 100, 0),
+            'resources' => $resourceRepo->findAll([], 100, 0),
+        ]);
+    }
 }
