@@ -43,6 +43,20 @@ $postActionMap = [
     'upload-avatar' => 'uploadAvatar',
     'export-ics' => 'exportIcs',
     'check-in' => 'checkIn',
+    'confirm' => 'confirm',
+    'submit' => 'submit',
+    'preview-users' => 'previewUsers',
+    'confirm-users' => 'confirmUsers',
+    'preview-resources' => 'previewResources',
+    'confirm-resources' => 'confirmResources',
+    'send-reset' => 'sendReset',
+    'reset' => 'reset',
+    'simulate' => 'simulate',
+    'cancel-recurring' => 'cancelRecurring',
+    'activate' => 'activate',
+    'complete' => 'complete',
+    'notify-impacted' => 'notifyImpacted',
+    'impact-report' => 'impactReport',
 ];
 
 $routes = [
@@ -54,16 +68,20 @@ $routes = [
     'resources' => ['ResourceController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'show' => [Middleware::class, 'auth'], 'browse' => [Middleware::class, 'auth'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
     'equipment' => ['EquipmentController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
     'time-slots' => ['TimeSlotController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
-    'booking-policies' => ['BookingPolicyController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
+    'booking-policies' => ['BookingPolicyController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin'], 'simulate' => [Middleware::class, 'admin']]],
     'bookings' => ['BookingController', ['index' => [Middleware::class, 'staff'], 'create' => [Middleware::class, 'auth'], 'edit' => [Middleware::class, 'auth'], 'show' => [Middleware::class, 'auth'], 'myBookings' => [Middleware::class, 'auth'], 'mySchedule' => [Middleware::class, 'auth'], 'calendar' => [Middleware::class, 'auth'], 'store' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth'], 'cancel' => [Middleware::class, 'auth'], 'checkConflict' => [Middleware::class, 'auth'], 'exportSchedule' => [Middleware::class, 'auth'], 'exportIcs' => [Middleware::class, 'auth'], 'checkIn' => [Middleware::class, 'auth']]],
     'approvals' => ['ApprovalController', ['index' => [Middleware::class, 'approver'], 'show' => [Middleware::class, 'approver'], 'history' => [Middleware::class, 'approver'], 'approve' => [Middleware::class, 'approver'], 'reject' => [Middleware::class, 'approver']]],
     'cancellations' => ['CancellationController', ['index' => [Middleware::class, 'admin']]],
-    'maintenance' => ['MaintenanceController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin']]],
+    'maintenance' => ['MaintenanceController', ['index' => [Middleware::class, 'admin'], 'create' => [Middleware::class, 'admin'], 'store' => [Middleware::class, 'admin'], 'edit' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin'], 'delete' => [Middleware::class, 'admin'], 'impactReport' => [Middleware::class, 'admin'], 'activate' => [Middleware::class, 'admin'], 'complete' => [Middleware::class, 'admin'], 'notifyImpacted' => [Middleware::class, 'admin']]],
     'notifications' => ['NotificationController', ['index' => [Middleware::class, 'auth'], 'markRead' => [Middleware::class, 'auth'], 'markAllRead' => [Middleware::class, 'auth']]],
     'reports' => ['ReportController', ['index' => [Middleware::class, 'admin'], 'generate' => [Middleware::class, 'admin'], 'exportCsv' => [Middleware::class, 'admin'], 'exportExcel' => [Middleware::class, 'admin'], 'exportPdf' => [Middleware::class, 'admin']]],
     'audit-logs' => ['AuditLogController', ['index' => [Middleware::class, 'admin']]],
     'profile' => ['ProfileController', ['index' => [Middleware::class, 'auth'], 'update' => [Middleware::class, 'auth'], 'upload-avatar' => [Middleware::class, 'auth']]],
     'settings' => ['SettingsController', ['index' => [Middleware::class, 'admin'], 'update' => [Middleware::class, 'admin']]],
+    'waitlist' => ['WaitlistController', ['index' => [Middleware::class, 'auth'], 'store' => [Middleware::class, 'auth'], 'confirm' => [Middleware::class, 'auth'], 'cancel' => [Middleware::class, 'auth']]],
+    'feedback' => ['FeedbackController', ['create' => [Middleware::class, 'auth'], 'store' => [Middleware::class, 'auth'], 'resource' => [Middleware::class, 'admin']]],
+    'import' => ['ImportController', ['index' => [Middleware::class, 'admin'], 'previewUsers' => [Middleware::class, 'admin'], 'confirmUsers' => [Middleware::class, 'admin'], 'previewResources' => [Middleware::class, 'admin'], 'confirmResources' => [Middleware::class, 'admin']]],
+    'password-reset' => ['PasswordResetController', ['index' => [Middleware::class, 'guest'], 'sendReset' => [Middleware::class, 'guest'], 'reset' => [Middleware::class, 'guest'], 'update' => [Middleware::class, 'guest']]],
 ];
 
 if (!isset($routes[$page])) {
@@ -104,6 +122,18 @@ $actionMap = [
     'export_ics' => 'exportIcs',
     'check-in' => 'checkIn',
     'check_in' => 'checkIn',
+    'preview-users' => 'previewUsers',
+    'preview_users' => 'previewUsers',
+    'confirm-users' => 'confirmUsers',
+    'confirm_users' => 'confirmUsers',
+    'preview-resources' => 'previewResources',
+    'preview_resources' => 'previewResources',
+    'confirm-resources' => 'confirmResources',
+    'confirm_resources' => 'confirmResources',
+    'send-reset' => 'sendReset',
+    'send_reset' => 'sendReset',
+    'cancel-recurring' => 'cancelRecurring',
+    'cancel_recurring' => 'cancelRecurring',
 ];
 
 if (isset($actionMap[$action])) {
