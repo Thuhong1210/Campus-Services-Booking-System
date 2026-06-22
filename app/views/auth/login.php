@@ -49,17 +49,4 @@
     Sign In to Campus Services
   </button>
 
-  <!-- ─── Demo Credentials ──────────────────────────────────── -->
-  <div class="rounded-3 p-3" style="background:var(--bg-muted);font-size:12.5px;color:var(--text-sub)">
-    <div class="fw-semibold mb-2" style="color:var(--text-main)">
-      <i class="bi bi-info-circle me-1" style="color:var(--primary)"></i>
-      Demo Accounts
-    </div>
-    <div class="d-flex flex-column gap-1">
-      <div><strong>Admin:</strong> admin@example.com / admin123</div>
-      <div><strong>Student:</strong> student@example.com / student123</div>
-      <div><strong>Lecturer:</strong> lecturer@example.com / lecturer123</div>
-    </div>
-  </div>
-
 </form>
