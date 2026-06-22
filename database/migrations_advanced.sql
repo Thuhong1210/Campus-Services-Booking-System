@@ -91,16 +91,16 @@ CREATE TABLE IF NOT EXISTS password_resets (
 
 -- ===================== ALTER USERS TABLE (Security) =====================
 ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS failed_login_attempts INT UNSIGNED NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS locked_until DATETIME DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS must_change_password TINYINT(1) NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS last_login_at DATETIME DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS remember_token VARCHAR(100) DEFAULT NULL;
+  ADD COLUMN failed_login_attempts INT UNSIGNED NOT NULL DEFAULT 0,
+  ADD COLUMN locked_until DATETIME DEFAULT NULL,
+  ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN last_login_at DATETIME DEFAULT NULL,
+  ADD COLUMN remember_token VARCHAR(100) DEFAULT NULL;
 
 -- ===================== ALTER BOOKINGS TABLE (Recurring) =====================
 ALTER TABLE bookings
-  ADD COLUMN IF NOT EXISTS recurring_group_id VARCHAR(36) DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS is_recurring TINYINT(1) NOT NULL DEFAULT 0;
+  ADD COLUMN recurring_group_id VARCHAR(36) DEFAULT NULL,
+  ADD COLUMN is_recurring TINYINT(1) NOT NULL DEFAULT 0;
 
 -- ===================== NOTIFICATION TYPE EXTENSION =====================
 -- Add new notification types for waitlist and feedback
